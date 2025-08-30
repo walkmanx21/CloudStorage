@@ -1,0 +1,21 @@
+version: '3'
+
+services:
+  postgres:
+    container_name: postgres_container
+    image: postgres:17
+    restart: always
+    environment:
+      POSTGRES_DB: cloud_storage_db
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+  adminer:
+    container_name: adminer_container
+    image: adminer
+    restart: always
+    ports:
+      - '8080:8080'
+volumes:
+  pg_data:
