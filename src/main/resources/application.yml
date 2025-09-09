@@ -1,0 +1,23 @@
+spring:
+  application:
+    name: CloudStorage
+
+  #Datasource Configuration
+  datasource:
+    driver-class-name: org.postgres.Driver
+    url: jdbc:postgresql://localhost:5432/security_app_db
+    username: postgres
+    password: postgres
+
+  #Hibernate configuration
+  jpa:
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        show_sql: true
+
+  #HiddenHttpFilter Configuration
+  mvc:
+    hidden method:
+      filter:
+        enabled: true
