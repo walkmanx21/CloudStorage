@@ -21,4 +21,10 @@ public class ExceptionHandlerFilter {
         return new ErrorResponseDto("User with this username already exist");
     }
 
+    @ExceptionHandler(Throwable.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponseDto handleUnknownError() {
+        return new ErrorResponseDto("Something went wrong. Try again later");
+    }
+
 }

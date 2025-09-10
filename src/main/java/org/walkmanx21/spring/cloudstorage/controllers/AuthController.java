@@ -25,11 +25,12 @@ public class AuthController {
     }
 
     @PostMapping("/sign-up")
-    public UserResponseDto registration (@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult) {
+    public ResponseEntity <UserResponseDto> registration (@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
             throwNewBadCredentialsException(bindingResult);
         }
-        return userService.register(userRequestDto);
+        UserResponseDto userResponseDto = userService.register(userRequestDto);
+        return new ResponseEntity<>(userResponseDto, HttpStatus.CREATED);
     }
 
     private void throwNewBadCredentialsException(BindingResult bindingResult) {

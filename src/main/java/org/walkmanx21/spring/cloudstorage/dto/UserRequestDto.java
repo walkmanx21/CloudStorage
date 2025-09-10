@@ -10,13 +10,13 @@ import lombok.Setter;
 @Setter
 public class UserRequestDto {
 
-    @NotEmpty
+    @NotEmpty(message = "Username must not be empty")
     @Size(min = 2, max = 20, message = "Username must be between 2 and 20 characters long")
-    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "Only latin letters and numbers are allowed.")
+    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "Only latin letters and numbers are allowed for username")
     private String username;
 
-    @NotEmpty
+    @NotEmpty(message = "Password must not be empty")
     @Size(min = 6, max = 20, message = "Password must be between 6 and 20 characters long")
-    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "Only latin letters and numbers are allowed.")
+    @Pattern(regexp = "^[a-zA-Z0-9]+$", message = "Only latin letters and numbers are allowed for password")
     private String password;
 }
