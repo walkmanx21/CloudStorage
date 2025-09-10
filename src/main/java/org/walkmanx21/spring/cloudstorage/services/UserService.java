@@ -1,6 +1,8 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -9,11 +11,12 @@ import org.walkmanx21.spring.cloudstorage.dto.UserResponseDto;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.UserRole;
 import org.walkmanx21.spring.cloudstorage.repositories.UserRepository;
+import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.UserMapper;
 
 @Service
 @Transactional
-public class UserService {
+public class UserService implements UserDetailsService {
 
     private final UserMapper userMapper;
     private final UserRepository userRepository;
@@ -31,5 +34,12 @@ public class UserService {
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
         return userMapper.convertToUserResponseDto(user);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return userRepository.findUserByUsername(username)
+                .map(MyUserDetails::new)
+                .orElseThrow(() -> new UsernameNotFoundException("User with this username not found"));
     }
 }

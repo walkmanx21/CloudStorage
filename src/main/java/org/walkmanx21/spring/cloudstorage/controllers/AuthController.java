@@ -33,6 +33,17 @@ public class AuthController {
         return new ResponseEntity<>(userResponseDto, HttpStatus.CREATED);
     }
 
+
+    @PostMapping("/sign-in")
+    public ResponseEntity<UserResponseDto> authorization(@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            throwNewBadCredentialsException(bindingResult);
+        }
+        UserResponseDto userResponseDto = userService.authorize(userRequestDto);
+        return new ResponseEntity<>(userResponseDto, HttpStatus.CREATED);
+    }
+
+
     private void throwNewBadCredentialsException(BindingResult bindingResult) {
         StringBuilder builder = new StringBuilder();
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
