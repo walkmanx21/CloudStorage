@@ -33,6 +33,7 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-data-redis'
     implementation 'org.liquibase:liquibase-core'
     implementation 'org.liquibase:liquibase-core:4.33.0'
+    implementation 'org.modelmapper:modelmapper:3.2.4'
 
     compileOnly 'org.projectlombok:lombok'
 
