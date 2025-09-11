@@ -35,22 +35,22 @@ public class AuthController {
     @PostMapping("/sign-up")
     public ResponseEntity <UserResponseDto> registration (@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            throwNewBadCredentialsException(bindingResult);
+            throwInvalidCredentialsException(bindingResult);
         }
         return new ResponseEntity<>(userService.register(userRequestDto), HttpStatus.CREATED);
     }
 
 
-    @PostMapping("/sign-in")
-    public ResponseEntity<UserResponseDto> authorization(@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            throwNewBadCredentialsException(bindingResult);
-        }
-        return new ResponseEntity<>(userService.authorize(userRequestDto), HttpStatus.OK);
-    }
+//    @PostMapping("/sign-in")
+//    public ResponseEntity<UserResponseDto> authorization(@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult) {
+//        if (bindingResult.hasErrors()) {
+//            throwInvalidCredentialsException(bindingResult);
+//        }
+//        return new ResponseEntity<>(userService.authorize(userRequestDto), HttpStatus.OK);
+//    }
 
 
-    private void throwNewBadCredentialsException(BindingResult bindingResult) {
+    private void throwInvalidCredentialsException(BindingResult bindingResult) {
         StringBuilder builder = new StringBuilder();
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
         fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));

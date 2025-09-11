@@ -22,6 +22,11 @@ services:
   redis:
     container_name: redis_container
     image: redis
+    environment:
+      REDIS_USER: ${REDIS_USER}
+      REDIS_USER_PASSWORD: ${REDIS_USER_PASSWORD}
     restart: always
+    ports:
+      - '6379:6379'
 volumes:
   pg_data:

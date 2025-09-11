@@ -21,3 +21,18 @@ spring:
     hidden method:
       filter:
         enabled: true
+
+  #Redis
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD}
+
+  #Spring Session
+  session:
+    timeout: 7d
+
+  logging:
+    level:
+      org.springframework.session: DEBUG

@@ -20,6 +20,11 @@ services:
   redis:
     container_name: redis_container
     image: redis
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
     restart: always
+    volumes:
+      - redis-data:/data
 volumes:
   pg_data:
+  redis-data:
