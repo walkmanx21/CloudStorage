@@ -29,12 +29,6 @@ public class ExceptionHandlerFilter {
         return new ErrorResponseDto(e.getMessage());
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public ErrorResponseDto handleBadCredentialsException() {
-        return new ErrorResponseDto("Incorrect data (there is no such user, or the password is incorrect)");
-    }
-
     @ExceptionHandler(Throwable.class)
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponseDto handleUnknownError() {

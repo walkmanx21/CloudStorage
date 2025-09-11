@@ -36,3 +36,12 @@ spring:
   logging:
     level:
       org.springframework.session: DEBUG
+
+
+
+server:
+  servlet:
+    encoding:
+      charset: UTF-8
+      force: true
+      enabled: true

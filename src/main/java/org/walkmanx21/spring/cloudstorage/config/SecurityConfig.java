@@ -1,10 +1,12 @@
 package org.walkmanx21.spring.cloudstorage.config;
 
 import jakarta.servlet.http.HttpServletResponse;
+import jakarta.validation.Validator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -18,7 +20,9 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidCredentialsException;
 import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
+import org.walkmanx21.spring.cloudstorage.util.UserRequestDtoValidator;
 
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -26,10 +30,10 @@ import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager) throws Exception {
+    public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager, UserRequestDtoValidator userRequestDtoValidator, Validator hibernateValidator) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .addFilterAt(jsonUsernamePasswordFilter(authenticationManager), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(jsonUsernamePasswordFilter(authenticationManager, userRequestDtoValidator, hibernateValidator), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in", "/error").permitAll()
                         .anyRequest().hasAnyRole("USER", "ADMIN"))
@@ -57,8 +61,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JsonUsernamePasswordFilter jsonUsernamePasswordFilter(AuthenticationManager authenticationManager) {
-        JsonUsernamePasswordFilter filter = new JsonUsernamePasswordFilter();
+    public JsonUsernamePasswordFilter jsonUsernamePasswordFilter(AuthenticationManager authenticationManager, UserRequestDtoValidator userRequestDtoValidator, Validator hibernateValidator) {
+        JsonUsernamePasswordFilter filter = new JsonUsernamePasswordFilter(userRequestDtoValidator, hibernateValidator);
         filter.setAuthenticationManager(authenticationManager);
         filter.setFilterProcessesUrl("/api/auth/sign-in");
         filter.setAuthenticationSuccessHandler((request, response, authentication) -> {
@@ -71,9 +75,16 @@ public class SecurityConfig {
             response.getWriter().write("{\"username\":\"" + authentication.getName() + "\"}");
             response.setStatus(HttpServletResponse.SC_OK);
         });
-        filter.setAuthenticationFailureHandler((request, response, exception) ->
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)
-                //TODO ответ ошибки
+        filter.setAuthenticationFailureHandler((request, response, exception) -> {
+                    response.setContentType("application/json");
+
+                    String message = "{\"message\":\"Incorrect data (there is no such user, or the password is incorrect)\"}";
+                    if (exception instanceof BadCredentialsException) {
+                        message = "{\"message\":\"" + exception.getMessage() + "\"}";
+                    }
+                    response.getWriter().write(message);
+                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                }
         );
         return filter;
     }
