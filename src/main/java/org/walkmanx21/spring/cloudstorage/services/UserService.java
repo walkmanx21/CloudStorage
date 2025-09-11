@@ -1,5 +1,9 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -16,16 +20,18 @@ import org.walkmanx21.spring.cloudstorage.util.UserMapper;
 
 @Service
 @Transactional
-public class UserService implements UserDetailsService {
+public class UserService {
 
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final AuthenticationManager authManager;
 
-    public UserService(UserMapper userMapper, UserRepository userRepository, PasswordEncoder passwordEncoder) {
+    public UserService(UserMapper userMapper, UserRepository userRepository, PasswordEncoder passwordEncoder, AuthenticationManager authManager) {
         this.userMapper = userMapper;
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
+        this.authManager = authManager;
     }
 
     public UserResponseDto register(UserRequestDto userRequestDto) {
@@ -36,10 +42,9 @@ public class UserService implements UserDetailsService {
         return userMapper.convertToUserResponseDto(user);
     }
 
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findUserByUsername(username)
-                .map(MyUserDetails::new)
-                .orElseThrow(() -> new UsernameNotFoundException("User with this username not found"));
+    public UserResponseDto authorize(UserRequestDto userRequestDto) {
+        Authentication authentication = authManager.authenticate(new UsernamePasswordAuthenticationToken(userRequestDto.getUsername(), userRequestDto.getPassword()));
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        return new UserResponseDto(userDetails.getUsername());
     }
 }

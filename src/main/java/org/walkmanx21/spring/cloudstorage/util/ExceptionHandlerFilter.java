@@ -2,16 +2,18 @@ package org.walkmanx21.spring.cloudstorage.util;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.BadCredentialsException;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidCredentialsException;
 
 @RestControllerAdvice
 public class ExceptionHandlerFilter {
 
-    @ExceptionHandler(BadCredentialsException.class)
+    @ExceptionHandler(InvalidCredentialsException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponseDto handleBadCredentials(Exception e) {
+    public ErrorResponseDto handleInvalidCredentials(Exception e) {
         return new ErrorResponseDto(e.getMessage());
     }
 
@@ -19,6 +21,18 @@ public class ExceptionHandlerFilter {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponseDto handleDataIntegrityViolationException() {
         return new ErrorResponseDto("User with this username already exist");
+    }
+
+    @ExceptionHandler(UsernameNotFoundException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponseDto handleUsernameNotFoundException(Exception e) {
+        return new ErrorResponseDto(e.getMessage());
+    }
+
+    @ExceptionHandler(BadCredentialsException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public ErrorResponseDto handleBadCredentialsException() {
+        return new ErrorResponseDto("Incorrect data (there is no such user, or the password is incorrect)");
     }
 
     @ExceptionHandler(Throwable.class)
