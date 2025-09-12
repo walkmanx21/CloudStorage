@@ -7,6 +7,7 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.InvalidCredentialsException;
+import org.walkmanx21.spring.cloudstorage.exceptions.UserUnauthorizedException;
 
 @RestControllerAdvice
 public class ExceptionHandlerFilter {
@@ -27,6 +28,11 @@ public class ExceptionHandlerFilter {
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponseDto handleUsernameNotFoundException(Exception e) {
         return new ErrorResponseDto(e.getMessage());
+    }
+
+    @ExceptionHandler(UserUnauthorizedException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    public void handleUsernameNotFoundException() {
     }
 
     @ExceptionHandler(Throwable.class)

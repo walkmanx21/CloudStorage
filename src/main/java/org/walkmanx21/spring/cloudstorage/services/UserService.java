@@ -1,6 +1,10 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
 import lombok.RequiredArgsConstructor;
+import org.antlr.v4.runtime.atn.PredicateEvalInfo;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -26,5 +30,11 @@ public class UserService {
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
         return userMapper.convertToUserResponseDto(user);
+    }
+
+    public UserResponseDto getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        return new UserResponseDto(userDetails.getUsername());
     }
 }
