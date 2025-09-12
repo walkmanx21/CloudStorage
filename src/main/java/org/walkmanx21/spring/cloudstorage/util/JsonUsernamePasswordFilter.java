@@ -42,7 +42,7 @@ public class JsonUsernamePasswordFilter extends UsernamePasswordAuthenticationFi
             if (!violations.isEmpty()) {
                 StringBuilder builder = new StringBuilder();
                 violations.forEach(v -> builder.append(v.getMessage()).append("; "));
-                throw new BadCredentialsException(builder.toString());
+                throw new InvalidCredentialsException(builder.toString());
             }
 
             Errors errors = new BeanPropertyBindingResult(userRequestDto, "userRequestDto");
@@ -52,7 +52,7 @@ public class JsonUsernamePasswordFilter extends UsernamePasswordAuthenticationFi
                 StringBuilder builder = new StringBuilder();
                 List<FieldError> fieldErrors = errors.getFieldErrors();
                 fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
-                throw new BadCredentialsException(builder.toString());
+                throw new InvalidCredentialsException(builder.toString());
             }
 
             UsernamePasswordAuthenticationToken token = new UsernamePasswordAuthenticationToken(userRequestDto.getUsername(), userRequestDto.getPassword());

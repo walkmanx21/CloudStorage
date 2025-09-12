@@ -1,6 +1,8 @@
 package org.walkmanx21.spring.cloudstorage.exceptions;
 
-public class InvalidCredentialsException extends RuntimeException {
+import org.springframework.security.authentication.BadCredentialsException;
+
+public class InvalidCredentialsException extends BadCredentialsException {
     public InvalidCredentialsException(String message) {
         super(message);
     }

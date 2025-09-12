@@ -79,7 +79,7 @@ public class SecurityConfig {
                     response.setContentType("application/json");
 
                     String message = "{\"message\":\"Incorrect data (there is no such user, or the password is incorrect)\"}";
-                    if (exception instanceof BadCredentialsException) {
+                    if (exception instanceof InvalidCredentialsException) {
                         message = "{\"message\":\"" + exception.getMessage() + "\"}";
                     }
                     response.getWriter().write(message);
