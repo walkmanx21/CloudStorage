@@ -3,6 +3,7 @@ plugins {
     id 'org.springframework.boot' version '3.5.5'
     id 'io.spring.dependency-management' version '1.1.7'
 }
+apply from: 'version.gradle'
 
 group = 'org.walkmanx21.spring'
 version = '0.0.1-SNAPSHOT'
@@ -30,10 +31,10 @@ dependencies {
     implementation 'org.springframework.boot:spring-boot-starter-security'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-web'
-    implementation 'org.springframework.session:spring-session-data-redis:3.5.2'
+    implementation "org.springframework.session:spring-session-data-redis:${versions.session}"
     implementation 'org.liquibase:liquibase-core'
-    implementation 'org.modelmapper:modelmapper:3.2.4'
-    implementation 'io.lettuce:lettuce-core:6.8.1.RELEASE'
+    implementation "org.modelmapper:modelmapper:${versions.modelmapper}"
+    implementation "io.lettuce:lettuce-core:${versions.lettuce}"
 
     compileOnly 'org.projectlombok:lombok'
 
@@ -43,6 +44,7 @@ dependencies {
 
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation "org.testcontainers:postgresql:${versions.testcontainers}"
 
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }

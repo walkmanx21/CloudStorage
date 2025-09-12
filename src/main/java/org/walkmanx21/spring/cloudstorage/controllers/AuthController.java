@@ -1,6 +1,7 @@
 package org.walkmanx21.spring.cloudstorage.controllers;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -17,15 +18,11 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/api/auth")
+@RequiredArgsConstructor
 public class AuthController {
 
     private final UserService userService;
     private final UserRequestDtoValidator userRequestDtoValidator;
-
-    public AuthController(UserService userService, UserRequestDtoValidator userRequestDtoValidator) {
-        this.userService = userService;
-        this.userRequestDtoValidator = userRequestDtoValidator;
-    }
 
     @InitBinder
     protected void initBinder(WebDataBinder binder) {
