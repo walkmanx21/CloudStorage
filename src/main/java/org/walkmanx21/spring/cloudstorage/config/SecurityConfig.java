@@ -6,7 +6,6 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -35,11 +34,23 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterAt(jsonUsernamePasswordFilter(authenticationManager, userRequestDtoValidator, hibernateValidator), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in", "/error").permitAll()
+                        .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in").permitAll()
                         .anyRequest().hasAnyRole("USER", "ADMIN"))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
-                        .maximumSessions(1));
+                        .maximumSessions(1))
+                .logout(logout -> logout
+                        .logoutUrl("/api/auth/sign-out")
+                        .logoutSuccessHandler((request, response, authentication) -> {
+                                    if (authentication == null) {
+                                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                                    } else {
+                                        response.setStatus(HttpServletResponse.SC_NO_CONTENT);
+                                    }
+                                }
+                            )
+                        .invalidateHttpSession(true)
+                        .deleteCookies("SESSION"));
         return http.build();
     }
 
@@ -77,7 +88,6 @@ public class SecurityConfig {
         });
         filter.setAuthenticationFailureHandler((request, response, exception) -> {
                     response.setContentType("application/json");
-
                     String message = "{\"message\":\"Incorrect data (there is no such user, or the password is incorrect)\"}";
                     if (exception instanceof InvalidCredentialsException) {
                         message = "{\"message\":\"" + exception.getMessage() + "\"}";
