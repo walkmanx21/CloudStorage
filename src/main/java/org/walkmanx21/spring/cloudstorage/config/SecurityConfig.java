@@ -4,9 +4,9 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Validator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.data.redis.domain.geo.GeoLocation;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -21,7 +21,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.walkmanx21.spring.cloudstorage.exceptions.InvalidCredentialsException;
-import org.walkmanx21.spring.cloudstorage.util.GlobalExceptionHandlingFilter;
 import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
 import org.walkmanx21.spring.cloudstorage.util.UserRequestDtoValidator;
 
@@ -34,7 +33,7 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager, UserRequestDtoValidator userRequestDtoValidator, Validator hibernateValidator) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
-                .addFilterAt(jsonUsernamePasswordFilter(authenticationManager, userRequestDtoValidator, hibernateValidator), UsernamePasswordAuthenticationFilter.class)
+                .addFilterAt(jsonUsernamePasswordFilter(authenticationManager, hibernateValidator), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in", "/user/me").permitAll()
                         .requestMatchers("/user/me").authenticated()
@@ -44,7 +43,7 @@ public class SecurityConfig {
                         .maximumSessions(1))
                 .exceptionHandling(e -> e
                         .authenticationEntryPoint((request, response, authException) ->
-                                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)))
+                                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED)))
                 .logout(logout -> logout
                         .logoutUrl("/api/auth/sign-out")
                         .logoutSuccessHandler((request, response, authentication) -> {
@@ -56,8 +55,7 @@ public class SecurityConfig {
                                 }
                         )
                         .invalidateHttpSession(true)
-                        .deleteCookies("SESSION"))
-                .addFilterAt(globalExceptionHandlingFilter(), UsernamePasswordAuthenticationFilter.class);
+                        .deleteCookies("SESSION"));
         return http.build();
     }
 
@@ -79,8 +77,8 @@ public class SecurityConfig {
     }
 
     @Bean
-    public JsonUsernamePasswordFilter jsonUsernamePasswordFilter(AuthenticationManager authenticationManager, UserRequestDtoValidator userRequestDtoValidator, Validator hibernateValidator) {
-        JsonUsernamePasswordFilter filter = new JsonUsernamePasswordFilter(userRequestDtoValidator, hibernateValidator);
+    public JsonUsernamePasswordFilter jsonUsernamePasswordFilter(AuthenticationManager authenticationManager, Validator hibernateValidator) {
+        JsonUsernamePasswordFilter filter = new JsonUsernamePasswordFilter(hibernateValidator);
         filter.setAuthenticationManager(authenticationManager);
         filter.setFilterProcessesUrl("/api/auth/sign-in");
         filter.setAuthenticationSuccessHandler((request, response, authentication) -> {
@@ -98,17 +96,15 @@ public class SecurityConfig {
                     String message = "{\"message\":\"Incorrect data (there is no such user, or the password is incorrect)\"}";
                     if (exception instanceof InvalidCredentialsException) {
                         message = "{\"message\":\"" + exception.getMessage() + "\"}";
+                        response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
+                    } else {
+                        response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                     }
                     response.getWriter().write(message);
-                    response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                 }
         );
         return filter;
     }
 
-    @Bean
-    public GlobalExceptionHandlingFilter globalExceptionHandlingFilter() {
-        return new GlobalExceptionHandlingFilter();
-    }
 }
 

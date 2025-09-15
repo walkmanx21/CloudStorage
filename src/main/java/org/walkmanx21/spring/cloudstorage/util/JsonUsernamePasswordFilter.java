@@ -11,17 +11,16 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.walkmanx21.spring.cloudstorage.dto.UserRequestDto;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidCredentialsException;
 
 import java.io.IOException;
 
 public class JsonUsernamePasswordFilter extends UsernamePasswordAuthenticationFilter {
 
-    private final UserRequestDtoValidator userRequestDtoValidator;
     private final Validator hibernateValidator;
 
     @Autowired
-    public JsonUsernamePasswordFilter(UserRequestDtoValidator userRequestDtoValidator, Validator hibernateValidator) {
-        this.userRequestDtoValidator = userRequestDtoValidator;
+    public JsonUsernamePasswordFilter(Validator hibernateValidator) {
         this.hibernateValidator = hibernateValidator;
     }
 
@@ -37,7 +36,7 @@ public class JsonUsernamePasswordFilter extends UsernamePasswordAuthenticationFi
             if (!violations.isEmpty()) {
                 StringBuilder builder = new StringBuilder();
                 violations.forEach(v -> builder.append(v.getMessage()).append("; "));
-                unsuccessfulAuthentication(request, response, new BadCredentialsException(builder.toString()));
+                unsuccessfulAuthentication(request, response, new InvalidCredentialsException(builder.toString()));
                 return null;
             }
 

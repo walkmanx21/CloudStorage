@@ -34,10 +34,4 @@ public class ExceptionHandlerFilter {
     public void handleUsernameNotFoundException() {
     }
 
-//    @ExceptionHandler(Exception.class)
-//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-//    public ErrorResponseDto handleUnknownError() {
-//        return new ErrorResponseDto("Something went wrong. Try again later");
-//    }
-
 }
