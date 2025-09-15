@@ -2,7 +2,6 @@ package org.walkmanx21.spring.cloudstorage.util;
 
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
@@ -35,10 +34,10 @@ public class ExceptionHandlerFilter {
     public void handleUsernameNotFoundException() {
     }
 
-    @ExceptionHandler(Throwable.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponseDto handleUnknownError() {
-        return new ErrorResponseDto("Something went wrong. Try again later");
-    }
+//    @ExceptionHandler(Exception.class)
+//    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+//    public ErrorResponseDto handleUnknownError() {
+//        return new ErrorResponseDto("Something went wrong. Try again later");
+//    }
 
 }
