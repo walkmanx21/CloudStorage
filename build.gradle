@@ -35,6 +35,7 @@ dependencies {
     implementation 'org.liquibase:liquibase-core'
     implementation "org.modelmapper:modelmapper:${versions.modelmapper}"
     implementation "io.lettuce:lettuce-core:${versions.lettuce}"
+    implementation "io.minio:minio:${versions.minio}"
 
     compileOnly 'org.projectlombok:lombok'
 

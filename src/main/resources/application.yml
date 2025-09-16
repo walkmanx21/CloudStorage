@@ -33,11 +33,12 @@ spring:
   session:
     timeout: 7d
 
-  logging:
-    level:
-      org.springframework.session: DEBUG
-
-
+#Minio
+minio:
+  url: http://localhost:9000
+  access-key: ${MINIO_ROOT_USER}
+  secret-key: ${MINIO_ROOT_PASSWORD}
+  bucket: user-files
 
 server:
   servlet:
