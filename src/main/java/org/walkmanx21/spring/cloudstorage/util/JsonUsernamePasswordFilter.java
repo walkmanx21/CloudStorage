@@ -6,12 +6,11 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.walkmanx21.spring.cloudstorage.dto.UserRequestDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.InvalidCredentialsException;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 
 import java.io.IOException;
 
@@ -36,7 +35,7 @@ public class JsonUsernamePasswordFilter extends UsernamePasswordAuthenticationFi
             if (!violations.isEmpty()) {
                 StringBuilder builder = new StringBuilder();
                 violations.forEach(v -> builder.append(v.getMessage()).append("; "));
-                unsuccessfulAuthentication(request, response, new InvalidCredentialsException(builder.toString()));
+                unsuccessfulAuthentication(request, response, new InvalidRequestDataException(builder.toString()));
                 return null;
             }
 

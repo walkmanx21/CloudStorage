@@ -13,6 +13,7 @@ import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.InvalidPathException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
+import org.walkmanx21.spring.cloudstorage.util.InvalidRequestDataExceptionThrower;
 import org.walkmanx21.spring.cloudstorage.util.PathValidator;
 
 import java.util.List;
@@ -25,6 +26,7 @@ public class ResourceController {
 
     private final StorageService storageService;
     private final PathValidator pathValidator;
+    private final InvalidRequestDataExceptionThrower exceptionThrower;
 
     @InitBinder
     protected void initBinder(WebDataBinder binder) {
@@ -34,16 +36,17 @@ public class ResourceController {
     @GetMapping
     public ResponseEntity<Resource> showResourceData(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-            throwInvalidPathException(bindingResult);
+//            throwInvalidPathException(bindingResult);
+            exceptionThrower.throwInvalidRequestDataException(bindingResult);
         }
         return new ResponseEntity<>(storageService.getResourceData(pathRequestDto), HttpStatus.OK);
     }
 
-    private void throwInvalidPathException(BindingResult bindingResult) {
-        StringBuilder builder = new StringBuilder();
-        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
-        fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
-        throw new InvalidPathException(builder.toString());
-    }
+//    private void throwInvalidPathException(BindingResult bindingResult) {
+//        StringBuilder builder = new StringBuilder();
+//        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
+//        fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
+//        throw new InvalidPathException(builder.toString());
+//    }
 
 }

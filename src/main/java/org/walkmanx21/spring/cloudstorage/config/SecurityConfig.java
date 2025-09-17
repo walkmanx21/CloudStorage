@@ -19,7 +19,7 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.walkmanx21.spring.cloudstorage.exceptions.InvalidCredentialsException;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
 import org.walkmanx21.spring.cloudstorage.util.UserRequestDtoValidator;
 
@@ -93,7 +93,7 @@ public class SecurityConfig {
         filter.setAuthenticationFailureHandler((request, response, exception) -> {
                     response.setContentType("application/json");
                     String message = "{\"message\":\"Incorrect data (there is no such user, or the password is incorrect)\"}";
-                    if (exception instanceof InvalidCredentialsException) {
+                    if (exception instanceof InvalidRequestDataException) {
                         message = "{\"message\":\"" + exception.getMessage() + "\"}";
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     } else {
