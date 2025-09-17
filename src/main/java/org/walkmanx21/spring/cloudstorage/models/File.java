@@ -1,17 +1,12 @@
 package org.walkmanx21.spring.cloudstorage.models;
 
-import lombok.Builder;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.experimental.SuperBuilder;
 
-@Builder
+@SuperBuilder
 @Getter
-@Setter
-public class File {
+public class File extends Resource {
 
-    private String path;
-    private String name;
     private long size;
-    private ResourceType type;
 
 }

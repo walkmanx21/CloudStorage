@@ -1,7 +1,6 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
 import lombok.RequiredArgsConstructor;
-import org.antlr.v4.runtime.atn.PredicateEvalInfo;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -23,14 +22,14 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
-    private final MinioService minioService;
+    private final StorageService storageService;
 
     public UserResponseDto register(UserRequestDto userRequestDto) {
         User user = userMapper.convertToUser(userRequestDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
-        minioService.createUserDirectory(user.getId());
+        storageService.createUserDirectory(user.getId());
         return userMapper.convertToUserResponseDto(user);
     }
 
