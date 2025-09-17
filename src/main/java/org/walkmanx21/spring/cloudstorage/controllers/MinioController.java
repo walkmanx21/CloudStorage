@@ -16,7 +16,7 @@ public class MinioController {
 
     @PostMapping("/directory")
     public ResponseEntity<String> createDirectory(@RequestParam String path) {
-        minioService.createDirectory(path);
+//        minioService.createDirectory(path);
         String str = "Hello from controller!";
         return new ResponseEntity<>(str, HttpStatus.CREATED);
     }

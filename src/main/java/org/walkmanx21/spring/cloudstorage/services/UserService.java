@@ -23,12 +23,14 @@ public class UserService {
     private final UserMapper userMapper;
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
+    private final MinioService minioService;
 
     public UserResponseDto register(UserRequestDto userRequestDto) {
         User user = userMapper.convertToUser(userRequestDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
+        minioService.createUserDirectory(user.getId());
         return userMapper.convertToUserResponseDto(user);
     }
 

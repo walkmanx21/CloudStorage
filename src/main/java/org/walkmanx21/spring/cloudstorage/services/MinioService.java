@@ -1,24 +1,13 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
 import io.minio.*;
-import io.minio.errors.*;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.GrantedAuthority;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
 import org.walkmanx21.spring.cloudstorage.exceptions.MinioServiceException;
-import org.walkmanx21.spring.cloudstorage.models.User;
-import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Collection;
 
 @Service
 @RequiredArgsConstructor
@@ -29,27 +18,18 @@ public class MinioService {
 
     @PostConstruct
     public void init() {
-        createStartBucket();
-    }
-
-    public void createDirectory(String path) {
-        createUserDirectory();
-    }
-
-    private void createStartBucket() {
-        try {
-            minioClient.makeBucket(MakeBucketArgs
-                    .builder().bucket("user-files")
-                    .build());
-            log.info("Стартовый bucket успешно создан");
-        } catch (Exception e) {
-            log.info("Стартовый bucket ранее уже был создан");
+        if (!checkRootBucketExist()) {
+            createRootBucket();
         }
     }
 
-    private void createUserDirectory() {
-        MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        int userId = myUserDetails.getUser().getId();
+//    public void createDirectory(String path) {
+//        createUserDirectory();
+//    }
+
+
+
+    public void createUserDirectory(int userId) {
         String userDirectory = "user-" + userId + "-files/";
         try {
             minioClient.putObject(PutObjectArgs.builder()
@@ -57,9 +37,32 @@ public class MinioService {
                     .object(userDirectory)
                     .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                     .build());
-            log.info("Рабочая директория пользователя {} успешно создана", myUserDetails.getUser().getUsername());
+            log.info("Рабочая директория пользователя c id={} успешно создана", userId);
         } catch (Exception e) {
-            log.info("Рабочая директория пользователя {} уже создана", myUserDetails.getUser().getUsername());
+            throw new MinioServiceException(e.getMessage(), e);
         }
+    }
+
+    private void createRootBucket() {
+        try {
+            minioClient.makeBucket(MakeBucketArgs
+                    .builder().bucket("user-files")
+                    .build());
+            log.info("Стартовый bucket успешно создан");
+        } catch (Exception e) {
+            throw new MinioServiceException(e.getMessage(), e);
+        }
+    }
+
+    private boolean checkRootBucketExist() {
+        boolean exist;
+        try {
+            exist = minioClient.bucketExists(BucketExistsArgs.builder()
+                    .bucket("user-files")
+                    .build());
+        } catch (Exception e) {
+            throw new MinioServiceException(e.getMessage(), e);
+        }
+        return exist;
     }
 }
