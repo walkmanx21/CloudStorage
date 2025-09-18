@@ -7,6 +7,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
+import org.walkmanx21.spring.cloudstorage.exceptions.DirectoryToCreateAlreadyExistException;
+import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.models.File;
 import org.walkmanx21.spring.cloudstorage.models.Directory;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
@@ -32,9 +34,23 @@ public class StorageService {
     }
 
     public Resource createDirectory(PathRequestDto pathRequestDto) {
-        String fullPath =  getUserRootDirectory() + pathRequestDto.getPath();
-        minioService.createDirectory(ROOT_BUCKET, fullPath);
-        return resourceBuilder(pathRequestDto, fullPath,0L);
+        Path path = Paths.get(pathRequestDto.getPath());
+
+        String parent;
+        if (path.getParent() == null)
+            parent = getUserRootDirectory();
+        else
+            parent = path.getParent() + "/";
+
+        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
+
+        checkParentDirectoryExist(parent);
+        if (!checkDirectoryToCreateExist(pathRequestDto.getPath())) {
+            minioService.createDirectory(ROOT_BUCKET, fullPath);
+            return resourceBuilder(pathRequestDto, fullPath, 0L);
+        } else {
+            throw new DirectoryToCreateAlreadyExistException();
+        }
     }
 
     public void createUserRootDirectory(int userId) {
@@ -43,7 +59,7 @@ public class StorageService {
     }
 
     public Resource getResourceData(PathRequestDto pathRequestDto) {
-        String fullPath =  getUserRootDirectory() + pathRequestDto.getPath();
+        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
         StatObjectResponse stat = minioService.getResourceData(ROOT_BUCKET, fullPath);
         return resourceBuilder(pathRequestDto, fullPath, stat.size());
     }
@@ -69,7 +85,7 @@ public class StorageService {
         if (path.getParent() == null)
             parent = "/";
         else
-            parent = path.getParent().toString() + "/";
+            parent = path.getParent() + "/";
 
         if (fullPath.endsWith("/")) {
             return Directory.builder()
@@ -86,4 +102,26 @@ public class StorageService {
                     .build();
         }
     }
+
+    private void checkParentDirectoryExist(String parent) {
+        try {
+            minioService.getResourceData(ROOT_BUCKET, parent);
+        } catch (Exception e) {
+            throw new ParentDirectoryNotExistException();
+        }
+    }
+
+    private boolean checkDirectoryToCreateExist(String path) {
+        log.info("Зашли в проверку существования добавляемой папки");
+        try {
+            minioService.getResourceData(ROOT_BUCKET, path);
+            log.info("Добавляемая папка существует");
+            return true;
+        } catch (Exception e) {
+            log.info("Добавляемая папка не существует");
+            return false;
+        }
+    }
+
+
 }

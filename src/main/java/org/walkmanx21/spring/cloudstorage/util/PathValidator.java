@@ -5,6 +5,9 @@ import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 @Component
 public class PathValidator implements Validator {
     @Override
@@ -15,13 +18,13 @@ public class PathValidator implements Validator {
     @Override
     public void validate(Object target, Errors errors) {
         PathRequestDto pathRequestDto = (PathRequestDto) target;
-        String path = pathRequestDto.getPath();
+        Path path = Paths.get(pathRequestDto.getPath());
 
         if (path.startsWith("/")) {
             errors.rejectValue("path", "", "Path field must not start with a character '/'");
         }
 
-        if (path.contains("//")) {
+        if (path.toString().contains("//")) {
             errors.rejectValue("path", "", "Path field must not contain more than one character '/' in a row");
         }
 

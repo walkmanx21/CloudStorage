@@ -16,7 +16,7 @@ import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.util.InvalidRequestDataExceptionThrower;
 
 @RestController
-@RequestMapping("/directory")
+@RequestMapping("/api/directory")
 @RequiredArgsConstructor
 public class DirectoryController {
 

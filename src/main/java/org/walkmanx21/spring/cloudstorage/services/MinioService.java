@@ -63,4 +63,13 @@ public class MinioService {
         return stat;
     }
 
+    public boolean getListObjects(String bucket, String parent) {
+        return minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(bucket)
+                .prefix(parent)
+                .recursive(false)
+                .build())
+                .iterator().hasNext();
+    }
+
 }

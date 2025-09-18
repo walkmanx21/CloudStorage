@@ -34,8 +34,8 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .addFilterAt(jsonUsernamePasswordFilter(authenticationManager, hibernateValidator), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in", "/user/me").permitAll()
-                        .requestMatchers("/user/me").authenticated()
+                        .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in", "/api/user/me").permitAll()
+                        .requestMatchers("/api/user/me").authenticated()
                         .anyRequest().hasAnyRole("USER", "ADMIN"))
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)

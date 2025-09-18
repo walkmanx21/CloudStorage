@@ -6,9 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
-import org.walkmanx21.spring.cloudstorage.exceptions.InvalidPathException;
-import org.walkmanx21.spring.cloudstorage.exceptions.UserUnauthorizedException;
+import org.walkmanx21.spring.cloudstorage.exceptions.*;
 
 @RestControllerAdvice
 public class ExceptionHandlerFilter {
@@ -38,8 +36,19 @@ public class ExceptionHandlerFilter {
 
     @ExceptionHandler(ErrorResponseException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponseDto handleErrorResponse() {
+    public ErrorResponseDto handleErrorResponse(ErrorResponseException e) {
         return new ErrorResponseDto("The resource was not found on the specified path");
     }
 
+    @ExceptionHandler(ParentDirectoryNotExistException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponseDto handleParentDirectoryNotExistException() {
+        return new ErrorResponseDto("The parent folder does not exist");
+    }
+
+    @ExceptionHandler(DirectoryToCreateAlreadyExistException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponseDto handleDirectoryToCreateExistException() {
+        return new ErrorResponseDto("Directory to create already exist");
+    }
 }

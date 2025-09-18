@@ -16,6 +16,6 @@ public class PathRequestDto {
 
     @NotEmpty(message = "Path field must not be empty")
     @Size(max = 1024, message = "Path field must not be longer than 1024 characters.")
-    @Pattern(regexp = "^[a-zA-Z0-9\\-_.\\/]+$",  message = "The following characters are allowed for the path field: Latin letters, numbers, and symbols: '- _ . /'")
+    @Pattern(regexp = "^(?=.{1,260}$)(?:[^\\\\/:*?\"<>|]{1,255}(?<![ .])(?:[\\\\/]|$))+$",  message = "It is forbidden to use \\ / : * ? \" < > |, end a segment with a space or a period, make the segment longer than 255 characters and the entire path longer than 260 characters")
     private String path;
 }

@@ -20,7 +20,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/resource")
+@RequestMapping("/api/resource")
 @Slf4j
 public class ResourceController {
 
