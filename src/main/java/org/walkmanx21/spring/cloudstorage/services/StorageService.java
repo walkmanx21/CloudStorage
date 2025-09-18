@@ -7,14 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.MinioServiceException;
 import org.walkmanx21.spring.cloudstorage.models.File;
-import org.walkmanx21.spring.cloudstorage.models.Folder;
+import org.walkmanx21.spring.cloudstorage.models.Directory;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.models.ResourceType;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 
-import java.io.ByteArrayInputStream;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Service
@@ -22,7 +21,7 @@ import java.nio.file.Paths;
 @Slf4j
 public class StorageService {
 
-    private final MinioClient minioClient;
+    private final MinioService minioService;
     private static final String ROOT_BUCKET = "user-files";
 
     @PostConstruct
@@ -32,71 +31,59 @@ public class StorageService {
         }
     }
 
-    public void createUserDirectory(int userId) {
+    public Resource createDirectory(PathRequestDto pathRequestDto) {
+        String fullPath =  getUserRootDirectory() + pathRequestDto.getPath();
+        minioService.createDirectory(ROOT_BUCKET, fullPath);
+        return resourceBuilder(pathRequestDto, fullPath,0L);
+    }
+
+    public void createUserRootDirectory(int userId) {
         String userDirectory = "user-" + userId + "-files/";
-        try {
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(ROOT_BUCKET)
-                    .object(userDirectory)
-                    .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
-                    .build());
-        } catch (Exception e) {
-            throw new MinioServiceException(e.getMessage(), e);
-        }
+        minioService.createDirectory(ROOT_BUCKET, userDirectory);
     }
 
     public Resource getResourceData(PathRequestDto pathRequestDto) {
-
-        String path =  getUserRootDirectory() + pathRequestDto.getPath();
-        try {
-            StatObjectResponse stat = minioClient.statObject(StatObjectArgs.builder()
-                    .bucket(ROOT_BUCKET)
-                    .object(path).build());
-
-            if (path.endsWith("/")) {
-                return Folder.builder()
-                        .path(pathRequestDto.getPath())
-                        .type(ResourceType.DIRECTORY)
-                        .name(Paths.get(path).getFileName().toString())
-                        .build();
-            } else {
-                return File.builder()
-                        .path(pathRequestDto.getPath())
-                        .type(ResourceType.FILE)
-                        .name(Paths.get(path).getFileName().toString())
-                        .size(stat.size())
-                        .build();
-            }
-
-        } catch (Exception e) {
-            throw new MinioServiceException(e.getMessage(), e);
-        }
+        String fullPath =  getUserRootDirectory() + pathRequestDto.getPath();
+        StatObjectResponse stat = minioService.getResourceData(ROOT_BUCKET, fullPath);
+        return resourceBuilder(pathRequestDto, fullPath, stat.size());
     }
 
     private void createRootBucket() {
-        try {
-            minioClient.makeBucket(MakeBucketArgs
-                    .builder().bucket(ROOT_BUCKET)
-                    .build());
-        } catch (Exception e) {
-            throw new MinioServiceException(e.getMessage(), e);
-        }
+        minioService.createBucket(ROOT_BUCKET);
     }
 
     private boolean checkRootBucketExist() {
-        boolean exist;
-        try {
-            exist = minioClient.bucketExists(BucketExistsArgs.builder()
-                    .bucket(ROOT_BUCKET)
-                    .build());
-        } catch (Exception e) {
-            throw new MinioServiceException(e.getMessage(), e);
-        }
-        return exist;
+        return minioService.checkBucketExist(ROOT_BUCKET);
     }
 
     private String getUserRootDirectory() {
         MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return "user-" + myUserDetails.getUser().getId() + "-files/";
+    }
+
+    private Resource resourceBuilder(PathRequestDto pathRequestDto, String fullPath, Long size) {
+        String requestDtoPath = pathRequestDto.getPath();
+        Path path = Paths.get(requestDtoPath);
+
+        String parent;
+        if (path.getParent() == null)
+            parent = "/";
+        else
+            parent = path.getParent().toString() + "/";
+
+        if (fullPath.endsWith("/")) {
+            return Directory.builder()
+                    .path(parent)
+                    .type(ResourceType.DIRECTORY)
+                    .name(path.getFileName().toString())
+                    .build();
+        } else {
+            return File.builder()
+                    .path(parent)
+                    .type(ResourceType.FILE)
+                    .name(path.getFileName().toString())
+                    .size(size)
+                    .build();
+        }
     }
 }

@@ -29,7 +29,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
-        storageService.createUserDirectory(user.getId());
+        storageService.createUserRootDirectory(user.getId());
         return userMapper.convertToUserResponseDto(user);
     }
 

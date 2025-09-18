@@ -11,7 +11,7 @@ import lombok.experimental.SuperBuilder;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = Folder.class, name = "DIRECTORY"),
+        @JsonSubTypes.Type(value = Directory.class, name = "DIRECTORY"),
         @JsonSubTypes.Type(value = File.class, name = "FILE")
 })
 @SuperBuilder
