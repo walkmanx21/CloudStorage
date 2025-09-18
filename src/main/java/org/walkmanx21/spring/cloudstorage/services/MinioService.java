@@ -63,10 +63,10 @@ public class MinioService {
         return stat;
     }
 
-    public boolean getListObjects(String bucket, String parent) {
+    public boolean getListObjects(String bucket, String prefix) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucket)
-                .prefix(parent)
+                .prefix(prefix)
                 .recursive(false)
                 .build())
                 .iterator().hasNext();

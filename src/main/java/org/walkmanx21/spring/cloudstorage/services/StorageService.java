@@ -34,23 +34,14 @@ public class StorageService {
     }
 
     public Resource createDirectory(PathRequestDto pathRequestDto) {
-        Path path = Paths.get(pathRequestDto.getPath());
-
-        String parent;
-        if (path.getParent() == null)
-            parent = getUserRootDirectory();
-        else
-            parent = path.getParent() + "/";
-
-        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
+        Path directory = Paths.get(pathRequestDto.getPath());
+        String parent = directory.getParent() == null ? getUserRootDirectory() :  getUserRootDirectory() + directory.getParent().toString().replace("\\", "/") + "/";
+        String fullPathToDirectory = getUserRootDirectory() + directory + "/";
 
         checkParentDirectoryExist(parent);
-        if (!checkDirectoryToCreateExist(pathRequestDto.getPath())) {
-            minioService.createDirectory(ROOT_BUCKET, fullPath);
-            return resourceBuilder(pathRequestDto, fullPath, 0L);
-        } else {
-            throw new DirectoryToCreateAlreadyExistException();
-        }
+        checkDirectoryToCreateExist(fullPathToDirectory);
+        minioService.createDirectory(ROOT_BUCKET, fullPathToDirectory.replace("\\", "/"));
+        return resourceBuilder(directory, fullPathToDirectory, 0L);
     }
 
     public void createUserRootDirectory(int userId) {
@@ -61,7 +52,7 @@ public class StorageService {
     public Resource getResourceData(PathRequestDto pathRequestDto) {
         String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
         StatObjectResponse stat = minioService.getResourceData(ROOT_BUCKET, fullPath);
-        return resourceBuilder(pathRequestDto, fullPath, stat.size());
+        return resourceBuilder(Paths.get(pathRequestDto.getPath()), fullPath, stat.size());
     }
 
     private void createRootBucket() {
@@ -77,25 +68,17 @@ public class StorageService {
         return "user-" + myUserDetails.getUser().getId() + "-files/";
     }
 
-    private Resource resourceBuilder(PathRequestDto pathRequestDto, String fullPath, Long size) {
-        String requestDtoPath = pathRequestDto.getPath();
-        Path path = Paths.get(requestDtoPath);
-
-        String parent;
-        if (path.getParent() == null)
-            parent = "/";
-        else
-            parent = path.getParent() + "/";
-
+    private Resource resourceBuilder(Path path, String fullPath, Long size) {
+        String parent = path.getParent() == null ? "/" : path.getParent() + "/";
         if (fullPath.endsWith("/")) {
             return Directory.builder()
-                    .path(parent)
+                    .path(parent.replace("\\", "/"))
                     .type(ResourceType.DIRECTORY)
                     .name(path.getFileName().toString())
                     .build();
         } else {
             return File.builder()
-                    .path(parent)
+                    .path(parent.replace("\\", "/"))
                     .type(ResourceType.FILE)
                     .name(path.getFileName().toString())
                     .size(size)
@@ -104,23 +87,15 @@ public class StorageService {
     }
 
     private void checkParentDirectoryExist(String parent) {
-        try {
-            minioService.getResourceData(ROOT_BUCKET, parent);
-        } catch (Exception e) {
+        boolean exists = minioService.getListObjects(ROOT_BUCKET, parent);
+        if (!exists)
             throw new ParentDirectoryNotExistException();
-        }
     }
 
-    private boolean checkDirectoryToCreateExist(String path) {
-        log.info("Зашли в проверку существования добавляемой папки");
-        try {
-            minioService.getResourceData(ROOT_BUCKET, path);
-            log.info("Добавляемая папка существует");
-            return true;
-        } catch (Exception e) {
-            log.info("Добавляемая папка не существует");
-            return false;
-        }
+    private void checkDirectoryToCreateExist(String path) {
+        boolean exists = minioService.getListObjects(ROOT_BUCKET, path);
+        if (exists)
+            throw new DirectoryToCreateAlreadyExistException();
     }
 
 
