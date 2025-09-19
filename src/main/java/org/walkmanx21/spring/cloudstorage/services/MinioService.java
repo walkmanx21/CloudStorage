@@ -1,14 +1,14 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
 import io.minio.*;
+import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.walkmanx21.spring.cloudstorage.exceptions.MinioServiceException;
-import org.walkmanx21.spring.cloudstorage.models.Directory;
-import org.walkmanx21.spring.cloudstorage.models.File;
-import org.walkmanx21.spring.cloudstorage.models.ResourceType;
 
 import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 
 @Service
@@ -63,13 +63,45 @@ public class MinioService {
         return stat;
     }
 
-    public boolean getListObjects(String bucket, String prefix) {
+    public boolean checkDirectoryExist(String bucket, String prefix) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucket)
                 .prefix(prefix)
                 .recursive(false)
                 .build())
                 .iterator().hasNext();
+    }
+
+    public List<Item> getDirectoryContents(String bucket, String prefix, boolean recursive) {
+        Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
+                .bucket(bucket)
+                .prefix(prefix)
+                .recursive(recursive)
+                .build());
+
+        List<Item> items = new ArrayList<>();
+        try {
+            for (Result<Item> result : results) {
+                items.add(result.get());
+            }
+        } catch (Exception e) {
+            throw new MinioServiceException(e.getMessage(), e);
+        }
+        return items;
+    }
+
+    public void removeObject(String bucket, String object) {
+        List<Item> items = getDirectoryContents(bucket, object, true);
+        for (Item item : items) {
+            try {
+                minioClient.removeObject(RemoveObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(item.objectName())
+                        .build());
+            } catch (Exception e) {
+                throw new MinioServiceException(e.getMessage(), e);
+            }
+        }
     }
 
 }

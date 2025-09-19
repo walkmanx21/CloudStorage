@@ -36,17 +36,18 @@ public class ResourceController {
     @GetMapping
     public ResponseEntity<Resource> showResourceData(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult) {
         if (bindingResult.hasErrors()) {
-//            throwInvalidPathException(bindingResult);
             exceptionThrower.throwInvalidRequestDataException(bindingResult);
         }
         return new ResponseEntity<>(storageService.getResourceData(pathRequestDto), HttpStatus.OK);
     }
 
-//    private void throwInvalidPathException(BindingResult bindingResult) {
-//        StringBuilder builder = new StringBuilder();
-//        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
-//        fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
-//        throw new InvalidPathException(builder.toString());
-//    }
+    @DeleteMapping
+    public ResponseEntity<Void> deleteResource(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            exceptionThrower.throwInvalidRequestDataException(bindingResult);
+        }
+        storageService.removeResource(pathRequestDto);
+        return ResponseEntity.noContent().build();
+    }
 
 }

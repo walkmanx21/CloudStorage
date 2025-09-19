@@ -34,11 +34,4 @@ public class AuthController {
         }
         return new ResponseEntity<>(userService.register(userRequestDto), HttpStatus.CREATED);
     }
-
-//    private void throwInvalidCredentialsException(BindingResult bindingResult) {
-//        StringBuilder builder = new StringBuilder();
-//        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
-//        fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
-//        throw new InvalidRequestDataException(builder.toString());
-//    }
 }
