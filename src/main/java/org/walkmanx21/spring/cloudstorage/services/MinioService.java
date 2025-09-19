@@ -1,10 +1,12 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
 import io.minio.*;
+import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.walkmanx21.spring.cloudstorage.exceptions.MinioServiceException;
+import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
@@ -92,6 +94,8 @@ public class MinioService {
 
     public void removeObject(String bucket, String object) {
         List<Item> items = getDirectoryContents(bucket, object, true);
+        if (items.isEmpty())
+            throw new ResourceNotFoundException();
         for (Item item : items) {
             try {
                 minioClient.removeObject(RemoveObjectArgs.builder()

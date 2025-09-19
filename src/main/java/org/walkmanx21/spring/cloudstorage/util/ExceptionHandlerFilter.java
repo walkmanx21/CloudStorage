@@ -34,9 +34,9 @@ public class ExceptionHandlerFilter {
     public void handleUsernameNotFoundException() {
     }
 
-    @ExceptionHandler(ErrorResponseException.class)
+    @ExceptionHandler({ErrorResponseException.class, ResourceNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    public ErrorResponseDto handleErrorResponse(ErrorResponseException e) {
+    public ErrorResponseDto handleErrorResponse() {
         return new ErrorResponseDto("The resource was not found on the specified path");
     }
 
