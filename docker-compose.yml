@@ -36,6 +36,12 @@ services:
       - minio-storage:/data
       - minio-config:/root/.minio
     command: server /data --console-address ":9001"
+  frontend:
+    container_name: frontend_container
+    image: walkmanx21/frontend-image
+    restart: always
+    ports:
+      - '8082:80'
 
 volumes:
   pg_data:

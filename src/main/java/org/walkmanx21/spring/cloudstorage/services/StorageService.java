@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.DirectoryToCreateAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
@@ -18,6 +19,8 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -73,6 +76,18 @@ public class StorageService {
     public void removeResource(PathRequestDto pathRequestDto) {
         String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
         minioService.removeObject(ROOT_BUCKET, fullPath);
+    }
+
+    public List<Resource> uploadResources(PathRequestDto pathRequestDto, Map<String, MultipartFile> files) {
+        String destinationDirectory = getUserRootDirectory() + pathRequestDto.getPath();
+        minioService.uploadResources(ROOT_BUCKET, destinationDirectory, files);
+        List<Resource> resources = new ArrayList<>();
+        files.forEach((key, file) -> {
+            Path path = Paths.get(pathRequestDto.getPath() + key);
+            String parent = path.getParent() == null ? "/" : path.getParent() + "/";
+            resources.add(resourceBuilder.buildFile(parent, path, file.getSize()));
+        });
+        return resources;
     }
 
     private void createRootBucket() {

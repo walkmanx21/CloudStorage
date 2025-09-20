@@ -4,17 +4,23 @@ import io.minio.*;
 import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.MinioServiceException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 
 import java.io.ByteArrayInputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class MinioService {
 
     private final MinioClient minioClient;
@@ -67,10 +73,10 @@ public class MinioService {
 
     public boolean checkDirectoryExist(String bucket, String prefix) {
         return minioClient.listObjects(ListObjectsArgs.builder()
-                .bucket(bucket)
-                .prefix(prefix)
-                .recursive(false)
-                .build())
+                        .bucket(bucket)
+                        .prefix(prefix)
+                        .recursive(false)
+                        .build())
                 .iterator().hasNext();
     }
 
@@ -108,4 +114,20 @@ public class MinioService {
         }
     }
 
+    public void uploadResources(String bucket, String destinationDirectory, Map<String, MultipartFile> files) {
+        files.forEach((key, file) -> {
+            try {
+                String fullFileName = destinationDirectory + key;
+                minioClient.putObject(PutObjectArgs.builder()
+                        .bucket(bucket)
+                        .object(fullFileName)
+                        .stream(file.getInputStream(), file.getSize(), -1)
+                        .contentType(file.getContentType())
+                        .build());
+                log.info(key + " загружен");
+            } catch (Exception e) {
+                throw new MinioServiceException(e.getMessage(), e);
+            }
+        });
+    }
 }

@@ -16,18 +16,9 @@ public class ResourceBuilder {
     public Resource build(Path path, String fullPath, Long size) {
         String parent = path.getParent() == null ? "/" : path.getParent() + "/";
         if (fullPath.endsWith("/")) {
-            return Directory.builder()
-                    .path(parent.replace("\\", "/"))
-                    .type(ResourceType.DIRECTORY)
-                    .name(path.getFileName().toString())
-                    .build();
+            return buildDirectory(parent, path);
         } else {
-            return File.builder()
-                    .path(parent.replace("\\", "/"))
-                    .type(ResourceType.FILE)
-                    .name(path.getFileName().toString())
-                    .size(size)
-                    .build();
+            return buildFile(parent, path, size);
         }
     }
 
@@ -35,20 +26,27 @@ public class ResourceBuilder {
         Path path = Paths.get(item.objectName());
         String parent = requestPath == null ? "/" : requestPath + "/";
 
-
         if (item.objectName().endsWith("/")) {
-            return Directory.builder()
-                    .path(parent.replace("\\", "/"))
-                    .type(ResourceType.DIRECTORY)
-                    .name(path.getFileName().toString())
-                    .build();
+            return buildDirectory(parent, path);
         } else {
-            return File.builder()
-                    .path(parent.replace("\\", "/"))
-                    .type(ResourceType.FILE)
-                    .name(path.getFileName().toString())
-                    .size(item.size())
-                    .build();
+            return buildFile(parent, path, item.size());
         }
+    }
+
+    public Directory buildDirectory(String parent, Path path) {
+         return Directory.builder()
+                .path(parent.replace("\\", "/"))
+                .type(ResourceType.DIRECTORY)
+                .name(path.getFileName().toString())
+                .build();
+    }
+
+    public File buildFile(String parent, Path path, long size) {
+        return File.builder()
+                .path(parent.replace("\\", "/"))
+                .type(ResourceType.FILE)
+                .name(path.getFileName().toString())
+                .size(size)
+                .build();
     }
 }

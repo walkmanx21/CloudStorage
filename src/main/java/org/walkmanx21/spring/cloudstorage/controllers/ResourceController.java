@@ -9,6 +9,7 @@ import org.springframework.validation.BindingResult;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.InvalidPathException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
@@ -17,6 +18,7 @@ import org.walkmanx21.spring.cloudstorage.util.InvalidRequestDataExceptionThrowe
 import org.walkmanx21.spring.cloudstorage.util.PathValidator;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -39,6 +41,14 @@ public class ResourceController {
             exceptionThrower.throwInvalidRequestDataException(bindingResult);
         }
         return new ResponseEntity<>(storageService.getResourceData(pathRequestDto), HttpStatus.OK);
+    }
+
+    @PostMapping
+    public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, @RequestParam Map<String, MultipartFile> files) {
+        if (bindingResult.hasErrors()) {
+            exceptionThrower.throwInvalidRequestDataException(bindingResult);
+        }
+        return new ResponseEntity<>(storageService.uploadResources(pathRequestDto, files), HttpStatus.OK);
     }
 
     @DeleteMapping
