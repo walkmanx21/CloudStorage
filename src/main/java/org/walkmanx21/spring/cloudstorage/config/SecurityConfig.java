@@ -2,6 +2,7 @@ package org.walkmanx21.spring.cloudstorage.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Validator;
+import org.springframework.cache.interceptor.CacheOperationSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -19,9 +20,14 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
 import org.walkmanx21.spring.cloudstorage.util.UserRequestDtoValidator;
+
+import java.util.List;
 
 @EnableWebSecurity
 @EnableMethodSecurity
@@ -32,9 +38,12 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http, AuthenticationManager authenticationManager, UserRequestDtoValidator userRequestDtoValidator, Validator hibernateValidator) throws Exception {
         http
                 .csrf(AbstractHttpConfigurer::disable)
+                .cors(cors ->
+                        cors.configurationSource(corsConfigurationSource())
+                )
                 .addFilterAt(jsonUsernamePasswordFilter(authenticationManager, hibernateValidator), UsernamePasswordAuthenticationFilter.class)
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in", "/api/user/me").permitAll()
+                        .requestMatchers("/api/auth/sign-up", "/api/auth/sign-in", "/").permitAll()
                         .requestMatchers("/api/user/me").authenticated()
                         .anyRequest().hasAnyRole("USER", "ADMIN"))
                 .sessionManagement(session -> session
@@ -103,6 +112,19 @@ public class SecurityConfig {
                 }
         );
         return filter;
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration config = new CorsConfiguration();
+        config.setAllowedOrigins(List.of("http://localhost:8082", "http://host.docker.internal:8082")); //TODO указать потом реальный адрес приложения
+        config.setAllowedMethods(List.of("*"));
+        config.setAllowedHeaders(List.of("*"));
+        config.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", config);
+        return source;
     }
 
 }
