@@ -37,7 +37,7 @@ public class ResourceBuilder {
          return Directory.builder()
                 .path(parent.replace("\\", "/"))
                 .type(ResourceType.DIRECTORY)
-                .name(path.getFileName().toString())
+                .name(path.getFileName().toString() + "/")
                 .build();
     }
 
