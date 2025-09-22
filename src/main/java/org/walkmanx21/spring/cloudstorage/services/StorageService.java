@@ -15,6 +15,7 @@ import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -93,6 +94,10 @@ public class StorageService {
         });
         log.info("Загрузка ресурса в Storage-Service завершена");
         return resources;
+    }
+
+    public Resource uploadResources (String fileOriginalName, String contentType, InputStream inputStream) {
+        return null;
     }
 
     private void createRootBucket() {

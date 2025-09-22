@@ -9,12 +9,16 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.util.InvalidRequestDataExceptionThrower;
 import org.walkmanx21.spring.cloudstorage.util.PathValidator;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.List;
 
 @RestController
@@ -40,12 +44,25 @@ public class ResourceController {
         return new ResponseEntity<>(storageService.getResourceData(pathRequestDto), HttpStatus.OK);
     }
 
+//    @PostMapping
+//    public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, @RequestParam("object") List<MultipartFile> files) {
+//        if (bindingResult.hasErrors()) {
+//            exceptionThrower.throwInvalidRequestDataException(bindingResult);
+//        }
+//        return new ResponseEntity<>(storageService.uploadResources(pathRequestDto, files), HttpStatus.CREATED);
+//    }
+
     @PostMapping
     public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, @RequestParam("object") List<MultipartFile> files) {
         if (bindingResult.hasErrors()) {
             exceptionThrower.throwInvalidRequestDataException(bindingResult);
         }
-        return new ResponseEntity<>(storageService.uploadResources(pathRequestDto, files), HttpStatus.CREATED);
+
+        List<Resource> resources = new ArrayList<>();
+        files.forEach(file -> {
+            resources.add(storageService.uploadResources(file.getOriginalFilename(), file.getContentType(), file.getInputStream()));
+        });
+        return new ResponseEntity<>(resources, HttpStatus.CREATED);
     }
 
     @DeleteMapping

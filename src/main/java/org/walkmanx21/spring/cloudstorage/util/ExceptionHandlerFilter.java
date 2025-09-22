@@ -8,6 +8,8 @@ import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.*;
 
+import java.io.IOException;
+
 @RestControllerAdvice
 public class ExceptionHandlerFilter {
 
@@ -50,5 +52,11 @@ public class ExceptionHandlerFilter {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponseDto handleDirectoryToCreateExistException() {
         return new ErrorResponseDto("Directory to create already exist");
+    }
+
+    @ExceptionHandler(IOException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponseDto handeIOException() {
+        return new ErrorResponseDto("Upload failure");
     }
 }
