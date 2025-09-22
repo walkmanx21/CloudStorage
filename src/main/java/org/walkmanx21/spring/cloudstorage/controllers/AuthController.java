@@ -1,5 +1,6 @@
 package org.walkmanx21.spring.cloudstorage.controllers;
 
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -28,10 +29,10 @@ public class AuthController {
     }
 
     @PostMapping("/sign-up")
-    public ResponseEntity <UserResponseDto> registration (@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult) {
+    public ResponseEntity <UserResponseDto> registration (@RequestBody @Valid UserRequestDto userRequestDto, BindingResult bindingResult, HttpServletRequest request) {
         if (bindingResult.hasErrors()) {
             exceptionThrower.throwInvalidRequestDataException(bindingResult);
         }
-        return new ResponseEntity<>(userService.register(userRequestDto), HttpStatus.CREATED);
+        return new ResponseEntity<>(userService.register(userRequestDto, request), HttpStatus.CREATED);
     }
 }

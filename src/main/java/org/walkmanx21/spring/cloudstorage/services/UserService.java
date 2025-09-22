@@ -1,7 +1,11 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -12,6 +16,7 @@ import org.walkmanx21.spring.cloudstorage.dto.UserResponseDto;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.UserRole;
 import org.walkmanx21.spring.cloudstorage.repositories.UserRepository;
+import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.UserMapper;
 
 @Service
@@ -23,13 +28,27 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final StorageService storageService;
+    private final MyUserDetailService userDetailService;
 
-    public UserResponseDto register(UserRequestDto userRequestDto) {
+    public UserResponseDto register(UserRequestDto userRequestDto, HttpServletRequest request) {
         User user = userMapper.convertToUser(userRequestDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
         storageService.createUserRootDirectory(user.getId());
+
+        UserDetails userDetails = userDetailService.loadUserByUsername(user.getUsername());
+        Authentication authentication = new UsernamePasswordAuthenticationToken(
+                userDetails,
+                userDetails.getPassword(),
+                userDetails.getAuthorities()
+        );
+        SecurityContext context = SecurityContextHolder.getContext();
+        context.setAuthentication(authentication);
+
+        HttpSession session = request.getSession(true);
+        session.setAttribute("SPRING_SECURITY_CONTEXT", context);
+
         return userMapper.convertToUserResponseDto(user);
     }
 
