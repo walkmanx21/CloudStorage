@@ -20,9 +20,9 @@ public class PathValidator implements Validator {
         PathRequestDto pathRequestDto = (PathRequestDto) target;
         Path path = Paths.get(pathRequestDto.getPath());
 
-        if (path.startsWith("/")) {
-            errors.rejectValue("path", "", "Path field must not start with a character '/'");
-        }
+//        if (path.startsWith("/")) {
+//            errors.rejectValue("path", "", "Path field must not start with a character '/'");
+//        }
 
         if (path.toString().contains("//")) {
             errors.rejectValue("path", "", "Path field must not contain more than one character '/' in a row");

@@ -74,7 +74,7 @@ public class StorageService {
     }
 
     public void removeResource(PathRequestDto pathRequestDto) {
-        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
+        String fullPath = (getUserRootDirectory() + pathRequestDto.getPath()).replace("//", "/");
         minioService.removeObject(ROOT_BUCKET, fullPath);
     }
 
