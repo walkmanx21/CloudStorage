@@ -6,19 +6,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.InvalidPathException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.util.InvalidRequestDataExceptionThrower;
 import org.walkmanx21.spring.cloudstorage.util.PathValidator;
 
 import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequiredArgsConstructor
@@ -44,11 +41,11 @@ public class ResourceController {
     }
 
     @PostMapping
-    public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, @RequestParam Map<String, MultipartFile> files) {
+    public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, @RequestParam("object") List<MultipartFile> files) {
         if (bindingResult.hasErrors()) {
             exceptionThrower.throwInvalidRequestDataException(bindingResult);
         }
-        return new ResponseEntity<>(storageService.uploadResources(pathRequestDto, files), HttpStatus.OK);
+        return new ResponseEntity<>(storageService.uploadResources(pathRequestDto, files), HttpStatus.CREATED);
     }
 
     @DeleteMapping

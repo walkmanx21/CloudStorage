@@ -17,9 +17,7 @@ import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 @Service
@@ -65,10 +63,10 @@ public class StorageService {
         Path path = Paths.get(pathRequestDto.getPath());
         String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
         List<Item> items = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, false);
-        items.remove(0);
         List<Resource> resources = new ArrayList<>();
         for (Item item : items) {
-            resources.add(resourceBuilder.build(path, item));
+            if (!item.objectName().equals(getUserRootDirectory()))
+                resources.add(resourceBuilder.build(path, item));
         }
         return resources;
     }
@@ -78,15 +76,22 @@ public class StorageService {
         minioService.removeObject(ROOT_BUCKET, fullPath);
     }
 
-    public List<Resource> uploadResources(PathRequestDto pathRequestDto, Map<String, MultipartFile> files) {
+    public List<Resource> uploadResources(PathRequestDto pathRequestDto, List<MultipartFile> files) {
         String destinationDirectory = getUserRootDirectory() + pathRequestDto.getPath();
-        minioService.uploadResources(ROOT_BUCKET, destinationDirectory, files);
+
+        Map<String, MultipartFile> filesMap = new HashMap<>();
+        for(MultipartFile file : files) {
+            filesMap.put(file.getOriginalFilename(), file);
+        }
+
+        minioService.uploadResources(ROOT_BUCKET, destinationDirectory, filesMap);
         List<Resource> resources = new ArrayList<>();
-        files.forEach((key, file) -> {
-            Path path = Paths.get(pathRequestDto.getPath() + key);
+        filesMap.forEach((key, file) -> {
+            Path path = Paths.get(pathRequestDto.getPath() + file.getOriginalFilename());
             String parent = path.getParent() == null ? "/" : path.getParent() + "/";
             resources.add(resourceBuilder.buildFile(parent, path, file.getSize()));
         });
+        log.info("Загрузка ресурса в Storage-Service завершена");
         return resources;
     }
 

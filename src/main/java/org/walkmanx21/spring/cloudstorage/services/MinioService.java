@@ -12,6 +12,7 @@ import org.walkmanx21.spring.cloudstorage.exceptions.MinioServiceException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -116,18 +117,20 @@ public class MinioService {
 
     public void uploadResources(String bucket, String destinationDirectory, Map<String, MultipartFile> files) {
         files.forEach((key, file) -> {
-            try {
-                String fullFileName = destinationDirectory + key;
+            try (InputStream inputStream = file.getInputStream()) {
+                String fullFileName = destinationDirectory + file.getOriginalFilename();
                 minioClient.putObject(PutObjectArgs.builder()
                         .bucket(bucket)
                         .object(fullFileName)
-                        .stream(file.getInputStream(), file.getSize(), -1)
+                        .stream(inputStream, file.getSize(), -1)
                         .contentType(file.getContentType())
                         .build());
-                log.info(key + " загружен");
+                log.info(file.getOriginalFilename() + " через minio-client загружен");
             } catch (Exception e) {
+                log.warn("Зашли в catch блок minio-service");
                 throw new MinioServiceException(e.getMessage(), e);
             }
         });
     }
+
 }
