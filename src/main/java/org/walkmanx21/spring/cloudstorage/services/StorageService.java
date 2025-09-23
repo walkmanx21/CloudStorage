@@ -8,15 +8,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.springframework.web.ErrorResponseException;
 import org.springframework.web.multipart.MultipartFile;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.DirectoryToCreateAlreadyExistException;
+import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 
-import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -33,8 +33,8 @@ public class StorageService {
 
     @PostConstruct
     public void init() {
-        if (!checkRootBucketExist()) {
-            createRootBucket();
+        if (!minioService.checkBucketExist(ROOT_BUCKET)) {
+            minioService.createBucket(ROOT_BUCKET);
         }
     }
 
@@ -43,8 +43,16 @@ public class StorageService {
         String parent = directory.getParent() == null ? getUserRootDirectory() :  getUserRootDirectory() + directory.getParent().toString().replace("\\", "/") + "/";
         String fullPathToDirectory = getUserRootDirectory() + directory + "/";
 
-        checkParentDirectoryExist(parent);
-        checkDirectoryToCreateExist(fullPathToDirectory);
+        boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
+        boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullPathToDirectory);
+
+        if(!parentDirectoryExist)
+            throw new ParentDirectoryNotExistException();
+
+        if(directoryToCreateExist)
+            throw new ResourceAlreadyExistException();
+
+//        checkResourceExist(fullPathToDirectory);
         minioService.createDirectory(ROOT_BUCKET, fullPathToDirectory.replace("\\", "/"));
         return resourceBuilder.build(directory, fullPathToDirectory, 0L);
     }
@@ -84,6 +92,11 @@ public class StorageService {
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
         for(MultipartFile file : files) {
+            boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, destinationDirectory + file.getOriginalFilename());
+
+            if (fileExist)
+                throw new ResourceAlreadyExistException();
+
             filesMap.put(file.getOriginalFilename(), file);
         }
 
@@ -98,29 +111,17 @@ public class StorageService {
         return resources;
     }
 
-    private void createRootBucket() {
-        minioService.createBucket(ROOT_BUCKET);
-    }
-
-    private boolean checkRootBucketExist() {
-        return minioService.checkBucketExist(ROOT_BUCKET);
-    }
+//    private void createRootBucket() {
+//        minioService.createBucket(ROOT_BUCKET);
+//    }
+//
+//    private boolean checkRootBucketExist() {
+//        return minioService.checkBucketExist(ROOT_BUCKET);
+//    }
 
     private String getUserRootDirectory() {
         MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return "user-" + myUserDetails.getUser().getId() + "-files/";
-    }
-
-    private void checkParentDirectoryExist(String parent) {
-        boolean exists = minioService.checkDirectoryExist(ROOT_BUCKET, parent);
-        if (!exists)
-            throw new ParentDirectoryNotExistException();
-    }
-
-    private void checkDirectoryToCreateExist(String path) {
-        boolean exists = minioService.checkDirectoryExist(ROOT_BUCKET, path);
-        if (exists)
-            throw new DirectoryToCreateAlreadyExistException();
     }
 
 

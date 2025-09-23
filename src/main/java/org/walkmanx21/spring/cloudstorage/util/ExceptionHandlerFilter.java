@@ -1,6 +1,5 @@
 package org.walkmanx21.spring.cloudstorage.util;
 
-import io.minio.errors.ErrorResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -9,8 +8,6 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.*;
-
-import java.io.IOException;
 
 @RestControllerAdvice
 @Slf4j
@@ -48,13 +45,13 @@ public class ExceptionHandlerFilter {
     @ExceptionHandler(ParentDirectoryNotExistException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponseDto handleParentDirectoryNotExistException() {
-        return new ErrorResponseDto("The parent folder does not exist");
+        return new ErrorResponseDto("Родительская папка не существует");
     }
 
-    @ExceptionHandler(DirectoryToCreateAlreadyExistException.class)
+    @ExceptionHandler(ResourceAlreadyExistException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponseDto handleDirectoryToCreateExistException() {
-        return new ErrorResponseDto("Directory to create already exist");
+        return new ErrorResponseDto("Файл/папка с таким именем уже существует");
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)

@@ -1,13 +1,11 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
 import io.minio.*;
-import io.minio.errors.ErrorResponseException;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.MinioServiceException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 
@@ -16,7 +14,6 @@ import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 
 @Service
@@ -73,7 +70,7 @@ public class MinioService {
         return stat;
     }
 
-    public boolean checkDirectoryExist(String bucket, String prefix) {
+    public boolean checkResourceExist(String bucket, String prefix) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(bucket)
                         .prefix(prefix)
