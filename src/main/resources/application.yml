@@ -2,34 +2,36 @@ spring:
   application:
     name: CloudStorage
 
-  #Datasource Configuration
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5433/cloud_storage_db
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
 
-  #Hibernate configuration
   jpa:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
         show_sql: true
 
-  #HiddenHttpFilter Configuration
   mvc:
     hidden method:
       filter:
         enabled: true
 
-  #Redis
   data:
     redis:
       host: localhost
       port: 6379
       password: ${REDIS_PASSWORD}
 
-#Minio
+  servlet:
+    multipart:
+      max-file-size: 4GB
+      max-request-size: 4GB
+      file-size-threshold: 0
+
+
 minio:
   url: http://localhost:9000
   access-key: ${MINIO_ROOT_USER}
@@ -44,3 +46,4 @@ server:
     session:
       cookie:
         name: SESSION
+

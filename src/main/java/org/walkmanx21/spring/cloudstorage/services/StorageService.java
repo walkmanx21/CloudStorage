@@ -19,7 +19,6 @@ import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Service
 @RequiredArgsConstructor
@@ -92,12 +91,8 @@ public class StorageService {
             String parent = path.getParent() == null ? "/" : path.getParent() + "/";
             resources.add(resourceBuilder.buildFile(parent, path, file.getSize()));
         });
-        log.info("Загрузка ресурса в Storage-Service завершена");
-        return resources;
-    }
 
-    public Resource uploadResources (String fileOriginalName, String contentType, InputStream inputStream) {
-        return null;
+        return resources;
     }
 
     private void createRootBucket() {

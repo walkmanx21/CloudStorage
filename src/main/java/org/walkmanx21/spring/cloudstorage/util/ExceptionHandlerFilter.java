@@ -53,10 +53,4 @@ public class ExceptionHandlerFilter {
     public ErrorResponseDto handleDirectoryToCreateExistException() {
         return new ErrorResponseDto("Directory to create already exist");
     }
-
-    @ExceptionHandler(IOException.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponseDto handeIOException() {
-        return new ErrorResponseDto("Upload failure");
-    }
 }
