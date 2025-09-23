@@ -1,16 +1,19 @@
 package org.walkmanx21.spring.cloudstorage.util;
 
 import io.minio.errors.ErrorResponseException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.*;
 
 import java.io.IOException;
 
 @RestControllerAdvice
+@Slf4j
 public class ExceptionHandlerFilter {
 
     @ExceptionHandler(InvalidRequestDataException.class)
@@ -52,5 +55,12 @@ public class ExceptionHandlerFilter {
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponseDto handleDirectoryToCreateExistException() {
         return new ErrorResponseDto("Directory to create already exist");
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    @ResponseStatus(HttpStatus.CONFLICT)
+    public ErrorResponseDto handleMaxUploadSizeExceededException() {
+        log.info("Поймали MaxUploadSizeExceededException");
+        return new ErrorResponseDto("Загружаемый размер файла/файлов превышает лимит в 4ГБ");
     }
 }

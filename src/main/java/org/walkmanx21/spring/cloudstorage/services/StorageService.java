@@ -5,6 +5,7 @@ import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -28,6 +29,7 @@ public class StorageService {
     private final MinioService minioService;
     private final ResourceBuilder resourceBuilder;
     private static final String ROOT_BUCKET = "user-files";
+    private final DataSourceTransactionManagerAutoConfiguration dataSourceTransactionManagerAutoConfiguration;
 
     @PostConstruct
     public void init() {
@@ -65,9 +67,10 @@ public class StorageService {
         List<Item> items = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, false);
         List<Resource> resources = new ArrayList<>();
         for (Item item : items) {
-            if (!item.objectName().equals(getUserRootDirectory()))
+            if (!item.objectName().equals(fullPath))
                 resources.add(resourceBuilder.build(path, item));
         }
+        System.out.println();
         return resources;
     }
 

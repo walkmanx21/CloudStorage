@@ -55,6 +55,7 @@ public class MinioService {
                     .object(path)
                     .stream(new ByteArrayInputStream(new byte[]{}), 0, -1)
                     .build());
+            log.info("Директория {} создана", path);
         } catch (Exception e) {
             throw new MinioServiceException(e.getMessage(), e);
         }
