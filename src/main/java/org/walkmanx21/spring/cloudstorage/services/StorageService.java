@@ -16,6 +16,7 @@ import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
+import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
@@ -23,6 +24,7 @@ import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -120,29 +122,35 @@ public class StorageService {
         String userDirectory = getUserRootDirectory();
         String fullPath = (userDirectory + pathRequestDto.getPath()).replace("//", "/");
 
+        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullPath);
+        if (!resourceExist)
+            throw new ResourceNotFoundException();
+
         return outputStream -> {
             if (fullPath.endsWith("/")) {
-                try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-                    List<Item> directoryContents = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, true);
-                    directoryContents.forEach(object -> {
-                        if (!object.isDir()) {
-                            String entryName = object.objectName().substring(userDirectory.length());
-                            try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, object.objectName())) {
-                                zipOutputStream.putNextEntry(new ZipEntry(entryName));
-                                inputStream.transferTo(zipOutputStream);
-                                zipOutputStream.closeEntry();
-                            } catch (IOException e) {
-                                throw new DownloadException();
-                            }
-                        }
-                    });
-                }
+//                try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+//                    List<Item> directoryContents = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, true);
+//                    directoryContents.forEach(object -> {
+//                        if (!object.isDir()) {
+//                            String entryName = object.objectName().substring(userDirectory.length());
+//                            try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, object.objectName())) {
+//                                zipOutputStream.putNextEntry(new ZipEntry(entryName));
+//                                inputStream.transferTo(zipOutputStream);
+//                                zipOutputStream.closeEntry();
+//                            } catch (IOException e) {
+//                                throw new DownloadException();
+//                            }
+//                        }
+//                    });
+//                }
+                downloadDirectory(outputStream, fullPath, userDirectory);
             } else {
-                try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
-                    inputStream.transferTo(outputStream);
-                } catch (IOException e) {
-                    throw new DownloadException();
-                }
+//                try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
+//                    inputStream.transferTo(outputStream);
+//                } catch (IOException e) {
+//                    throw new DownloadException();
+//                }
+                downloadFile(outputStream, fullPath);
             }
         };
     }
@@ -152,6 +160,35 @@ public class StorageService {
         return "user-" + myUserDetails.getUser().getId() + "-files/";
     }
 
+    private ZipOutputStream downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            List<Item> directoryContents = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, true);
+            directoryContents.forEach(object -> {
+                if (!object.isDir()) {
+                    String entryName = object.objectName().substring(userDirectory.length());
+                    try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, object.objectName())) {
+                        zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                        inputStream.transferTo(zipOutputStream);
+                        zipOutputStream.closeEntry();
+                    } catch (IOException e) {
+                        throw new DownloadException();
+                    }
+                }
+            });
+            return zipOutputStream;
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private InputStream downloadFile(OutputStream outputStream, String fullPath) {
+        try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
+            inputStream.transferTo(outputStream);
+            return inputStream;
+        } catch (IOException e) {
+            throw new DownloadException();
+        }
+    }
 
 
 }
