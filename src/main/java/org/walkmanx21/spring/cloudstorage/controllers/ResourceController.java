@@ -9,18 +9,13 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
-import org.walkmanx21.spring.cloudstorage.util.InvalidRequestDataExceptionThrower;
 import org.walkmanx21.spring.cloudstorage.util.PathValidator;
-
-import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Paths;
 import java.util.List;
 
@@ -32,7 +27,6 @@ public class ResourceController {
 
     private final StorageService storageService;
     private final PathValidator pathValidator;
-    private final InvalidRequestDataExceptionThrower exceptionThrower;
 
     @InitBinder
     protected void initBinder(WebDataBinder binder) {
@@ -40,27 +34,12 @@ public class ResourceController {
     }
 
     @GetMapping
-    public ResponseEntity<Resource> showResourceData(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            exceptionThrower.throwInvalidRequestDataException(bindingResult);
-        }
+    public ResponseEntity<Resource> showResourceData(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
         return new ResponseEntity<>(storageService.getResourceData(pathRequestDto), HttpStatus.OK);
     }
 
-//    @GetMapping("/download")
-//    public void downloadResource(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, HttpServletResponse response) {
-//        if (bindingResult.hasErrors()) {
-//            exceptionThrower.throwInvalidRequestDataException(bindingResult);
-//        }
-//        storageService.downloadResource(pathRequestDto, response);
-//    }
-
     @GetMapping("/download")
-    public ResponseEntity<InputStreamResource> downloadResource(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, HttpServletResponse response) {
-        if (bindingResult.hasErrors()) {
-            exceptionThrower.throwInvalidRequestDataException(bindingResult);
-        }
-
+    public ResponseEntity<InputStreamResource> downloadResource(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
         String fileName = Paths.get(pathRequestDto.getPath()).getFileName().toString();
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
@@ -69,19 +48,13 @@ public class ResourceController {
     }
 
     @PostMapping
-    public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult, @RequestParam("object") List<MultipartFile> files) {
-        if (bindingResult.hasErrors()) {
-            exceptionThrower.throwInvalidRequestDataException(bindingResult);
-        }
+    public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, @RequestParam("object") List<MultipartFile> files) {
         return new ResponseEntity<>(storageService.uploadResources(pathRequestDto, files), HttpStatus.CREATED);
     }
 
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteResource(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            exceptionThrower.throwInvalidRequestDataException(bindingResult);
-        }
+    public ResponseEntity<Void> deleteResource(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
         storageService.removeResource(pathRequestDto);
         return ResponseEntity.noContent().build();
     }

@@ -4,7 +4,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -21,7 +20,8 @@ public class PathValidator implements Validator {
         PathRequestDto pathRequestDto = (PathRequestDto) target;
 
         if (pathRequestDto.getPath() == null) {
-            throw new InvalidRequestDataException("Невалидный или отсутствующий путь");
+            errors.rejectValue("path", "", "Невалидный или отсутствующий путь");
+            return;
         }
 
         Path path = Paths.get(pathRequestDto.getPath());
@@ -31,7 +31,7 @@ public class PathValidator implements Validator {
 //        }
 
         if (path.toString().contains("//")) {
-            errors.rejectValue("path", "", "Path field must not contain more than one character '/' in a row");
+            errors.rejectValue("path", "", "Поле path не должно содержать более одного символа \"/\" подряд");
         }
 
     }

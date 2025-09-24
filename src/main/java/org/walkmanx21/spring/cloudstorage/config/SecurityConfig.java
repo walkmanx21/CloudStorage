@@ -2,11 +2,11 @@ package org.walkmanx21.spring.cloudstorage.config;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Validator;
-import org.springframework.cache.interceptor.CacheOperationSource;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.dao.DaoAuthenticationProvider;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
@@ -23,7 +23,6 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
 import org.walkmanx21.spring.cloudstorage.util.UserRequestDtoValidator;
 
@@ -108,7 +107,7 @@ public class SecurityConfig {
         filter.setAuthenticationFailureHandler((request, response, exception) -> {
                     response.setContentType("application/json");
                     String message = "{\"message\":\"Incorrect data (there is no such user, or the password is incorrect)\"}";
-                    if (exception instanceof InvalidRequestDataException) {
+                    if (exception instanceof BadCredentialsException) {
                         message = "{\"message\":\"" + exception.getMessage() + "\"}";
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     } else {

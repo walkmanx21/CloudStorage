@@ -5,36 +5,30 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.validation.BindException;
+import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.walkmanx21.spring.cloudstorage.dto.ErrorResponseDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.*;
 
+import java.util.List;
+
 @RestControllerAdvice
 @Slf4j
 public class ExceptionHandlerFilter {
 
-    @ExceptionHandler(InvalidRequestDataException.class)
-    @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ErrorResponseDto handleInvalidDataException(Exception e) {
-        return new ErrorResponseDto(e.getMessage());
-    }
-
     @ExceptionHandler(DataIntegrityViolationException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponseDto handleDataIntegrityViolationException() {
-        return new ErrorResponseDto("User with this username already exist");
+        return new ErrorResponseDto("Пользователь с данным именем уже существует");
     }
 
     @ExceptionHandler(UsernameNotFoundException.class)
     @ResponseStatus(HttpStatus.UNAUTHORIZED)
     public ErrorResponseDto handleUsernameNotFoundException(Exception e) {
         return new ErrorResponseDto(e.getMessage());
-    }
-
-    @ExceptionHandler(UserUnauthorizedException.class)
-    @ResponseStatus(HttpStatus.UNAUTHORIZED)
-    public void handleUsernameNotFoundException() {
     }
 
     @ExceptionHandler({ErrorResponseException.class, ResourceNotFoundException.class})
@@ -66,5 +60,15 @@ public class ExceptionHandlerFilter {
     @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
     public ErrorResponseDto handleDownloadException() {
         return new ErrorResponseDto("Ошибка загрузки");
+    }
+
+    @ExceptionHandler(BindException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ErrorResponseDto handleBindException(BindException e) {
+        BindingResult bindingResult = e.getBindingResult();
+        StringBuilder builder = new StringBuilder();
+        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
+        fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
+        return new ErrorResponseDto(builder.toString());
     }
 }

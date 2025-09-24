@@ -20,10 +20,10 @@ public class UserRequestDtoValidator implements Validator {
 
         UserRequestDto userRequestDto = (UserRequestDto) target;
         if (userRequestDto.getUsername().equals(userRequestDto.getPassword()))
-            errors.rejectValue("password", "", "Password and username must not match");
+            errors.rejectValue("password", "", "Имя пользователя и пароль не должны совпадать");
 
         if (checkPasswordInBlacklist(userRequestDto.getPassword())) {
-            errors.rejectValue("password", "", "Password is too simple. Come up with a more complex password");
+            errors.rejectValue("password", "", "Пароль слишком простой. Придумайте более сложный пароль");
         }
 
     }

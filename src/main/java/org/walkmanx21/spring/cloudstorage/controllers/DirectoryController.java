@@ -4,12 +4,10 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
-import org.walkmanx21.spring.cloudstorage.util.InvalidRequestDataExceptionThrower;
 
 import java.util.List;
 
@@ -18,22 +16,15 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DirectoryController {
 
-    private final InvalidRequestDataExceptionThrower exceptionThrower;
     private final StorageService storageService;
 
     @GetMapping
-    public ResponseEntity<List<Resource>> getDirectoryContents(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            exceptionThrower.throwInvalidRequestDataException(bindingResult);
-        }
+    public ResponseEntity<List<Resource>> getDirectoryContents(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
         return new ResponseEntity<>(storageService.getDirectoryContents(pathRequestDto), HttpStatus.OK);
     }
 
     @PostMapping
-    public ResponseEntity<Resource> createDirectory(@ModelAttribute @Valid PathRequestDto pathRequestDto, BindingResult bindingResult) {
-        if (bindingResult.hasErrors()) {
-            exceptionThrower.throwInvalidRequestDataException(bindingResult);
-        }
+    public ResponseEntity<Resource> createDirectory(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
         return new ResponseEntity<>(storageService.createDirectory(pathRequestDto), HttpStatus.OK);
     }
 }
