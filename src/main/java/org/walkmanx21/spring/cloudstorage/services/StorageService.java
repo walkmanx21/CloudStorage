@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
@@ -19,11 +20,14 @@ import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -33,7 +37,6 @@ public class StorageService {
     private final MinioService minioService;
     private final ResourceBuilder resourceBuilder;
     private static final String ROOT_BUCKET = "user-files";
-    private final DataSourceTransactionManagerAutoConfiguration dataSourceTransactionManagerAutoConfiguration;
 
     @PostConstruct
     public void init() {
@@ -56,7 +59,6 @@ public class StorageService {
         if(directoryToCreateExist)
             throw new ResourceAlreadyExistException();
 
-//        checkResourceExist(fullPathToDirectory);
         minioService.createDirectory(ROOT_BUCKET, fullPathToDirectory.replace("\\", "/"));
         return resourceBuilder.build(directory, fullPathToDirectory, 0L);
     }
@@ -114,38 +116,42 @@ public class StorageService {
         return resources;
     }
 
-//    public void downloadResource(PathRequestDto pathRequestDto, HttpServletResponse response) {
-//        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
-//
-//        try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
-//            response.setContentType("application/octet-stream");
-//            String fileName = Paths.get(pathRequestDto.getPath()).getFileName().toString();
-//            response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
-//            inputStream.transferTo(response.getOutputStream());
-//            response.setStatus(200);
-//        } catch (IOException e) {
-//            throw new DownloadException();
-//        }
-//    }
+    public StreamingResponseBody downloadResource(PathRequestDto pathRequestDto) {
+        String userDirectory = getUserRootDirectory();
+        String fullPath = (userDirectory + pathRequestDto.getPath()).replace("//", "/");
 
-    public InputStream downloadResource(PathRequestDto pathRequestDto) {
-        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
-        return minioService.getObject(ROOT_BUCKET, fullPath);
-
+        return outputStream -> {
+            if (fullPath.endsWith("/")) {
+                try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+                    List<Item> directoryContents = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, true);
+                    directoryContents.forEach(object -> {
+                        if (!object.isDir()) {
+                            String entryName = object.objectName().substring(userDirectory.length());
+                            try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, object.objectName())) {
+                                zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                                inputStream.transferTo(zipOutputStream);
+                                zipOutputStream.closeEntry();
+                            } catch (IOException e) {
+                                throw new DownloadException();
+                            }
+                        }
+                    });
+                }
+            } else {
+                try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
+                    inputStream.transferTo(outputStream);
+                } catch (IOException e) {
+                    throw new DownloadException();
+                }
+            }
+        };
     }
-
-//    private void createRootBucket() {
-//        minioService.createBucket(ROOT_BUCKET);
-//    }
-//
-//    private boolean checkRootBucketExist() {
-//        return minioService.checkBucketExist(ROOT_BUCKET);
-//    }
 
     private String getUserRootDirectory() {
         MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return "user-" + myUserDetails.getUser().getId() + "-files/";
     }
+
 
 
 }

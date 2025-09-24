@@ -12,6 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
@@ -39,12 +40,12 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
-    public ResponseEntity<InputStreamResource> downloadResource(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
-        String fileName = Paths.get(pathRequestDto.getPath()).getFileName().toString();
+    public ResponseEntity<StreamingResponseBody> downloadResource(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
+        String resourceName = Paths.get(pathRequestDto.getPath()).getFileName().toString();
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + fileName + "\"")
-                .body(new InputStreamResource(storageService.downloadResource(pathRequestDto)));
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + resourceName + "\"")
+                .body(storageService.downloadResource(pathRequestDto));
     }
 
     @PostMapping
