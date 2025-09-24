@@ -2,10 +2,13 @@ package org.walkmanx21.spring.cloudstorage.controllers;
 
 import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.*;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.WebDataBinder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +25,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/resource")
+@Validated
 @Slf4j
 public class ResourceController {
 
@@ -49,6 +53,14 @@ public class ResourceController {
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
                 .body(storageService.downloadResource(pathRequestDto));
+    }
+
+    @GetMapping("/move")
+    public ResponseEntity<Resource> moveOrRenameResource(
+            @RequestParam @NotBlank @Size(max = 10, message = "Поле path должно быть не более 10 символов") String from,
+            @RequestParam @NotBlank @Size(max = 1024, message = "Path field must not be longer than 1024 characters.") String to
+    ) {
+        return null;
     }
 
     @PostMapping

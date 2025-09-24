@@ -101,10 +101,10 @@ public class StorageService {
         for(MultipartFile file : files) {
             boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, destinationDirectory + file.getOriginalFilename());
 
-            if (fileExist)
+            if (!fileExist)
+                filesMap.put(file.getOriginalFilename(), file);
+            else
                 throw new ResourceAlreadyExistException();
-
-            filesMap.put(file.getOriginalFilename(), file);
         }
 
         minioService.uploadResources(ROOT_BUCKET, destinationDirectory, filesMap);
@@ -128,28 +128,8 @@ public class StorageService {
 
         return outputStream -> {
             if (fullPath.endsWith("/")) {
-//                try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-//                    List<Item> directoryContents = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, true);
-//                    directoryContents.forEach(object -> {
-//                        if (!object.isDir()) {
-//                            String entryName = object.objectName().substring(userDirectory.length());
-//                            try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, object.objectName())) {
-//                                zipOutputStream.putNextEntry(new ZipEntry(entryName));
-//                                inputStream.transferTo(zipOutputStream);
-//                                zipOutputStream.closeEntry();
-//                            } catch (IOException e) {
-//                                throw new DownloadException();
-//                            }
-//                        }
-//                    });
-//                }
                 downloadDirectory(outputStream, fullPath, userDirectory);
             } else {
-//                try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
-//                    inputStream.transferTo(outputStream);
-//                } catch (IOException e) {
-//                    throw new DownloadException();
-//                }
                 downloadFile(outputStream, fullPath);
             }
         };

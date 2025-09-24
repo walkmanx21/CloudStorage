@@ -1,9 +1,13 @@
 package org.walkmanx21.spring.cloudstorage.util;
 
 import io.minio.errors.ErrorResponseException;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.BindingResult;
@@ -70,5 +74,22 @@ public class ExceptionHandlerFilter {
         List<FieldError> fieldErrors = bindingResult.getFieldErrors();
         fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
         return new ErrorResponseDto(builder.toString());
+    }
+
+//    @ExceptionHandler(ConstraintViolationException.class)
+//    @ResponseStatus(HttpStatus.BAD_REQUEST)
+//    public ErrorResponseDto handleConstraintViolationException(ConstraintViolationException e) {
+//        return new ErrorResponseDto(e.getConstraintViolations().stream()
+//                .map(ConstraintViolation::getMessage).toList().toString());
+//    }
+
+    @ExceptionHandler(ConstraintViolationException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException e) {
+        return ResponseEntity.badRequest()
+                .contentType(MediaType.APPLICATION_JSON)
+                .body("message: " +
+                (e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage).toList().toString()));
     }
 }
