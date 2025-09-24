@@ -3,6 +3,7 @@ package org.walkmanx21.spring.cloudstorage.services;
 import io.minio.*;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
@@ -11,12 +12,15 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.ErrorResponseException;
 import org.springframework.web.multipart.MultipartFile;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
+import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
@@ -78,7 +82,6 @@ public class StorageService {
             if (!item.objectName().equals(fullPath))
                 resources.add(resourceBuilder.build(path, item));
         }
-        System.out.println();
         return resources;
     }
 
@@ -109,6 +112,26 @@ public class StorageService {
         });
 
         return resources;
+    }
+
+//    public void downloadResource(PathRequestDto pathRequestDto, HttpServletResponse response) {
+//        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
+//
+//        try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
+//            response.setContentType("application/octet-stream");
+//            String fileName = Paths.get(pathRequestDto.getPath()).getFileName().toString();
+//            response.setHeader("Content-Disposition", "attachment; filename=\"" + fileName + "\"");
+//            inputStream.transferTo(response.getOutputStream());
+//            response.setStatus(200);
+//        } catch (IOException e) {
+//            throw new DownloadException();
+//        }
+//    }
+
+    public InputStream downloadResource(PathRequestDto pathRequestDto) {
+        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
+        return minioService.getObject(ROOT_BUCKET, fullPath);
+
     }
 
 //    private void createRootBucket() {

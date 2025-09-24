@@ -4,6 +4,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;
 import org.springframework.validation.Validator;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -18,6 +19,11 @@ public class PathValidator implements Validator {
     @Override
     public void validate(Object target, Errors errors) {
         PathRequestDto pathRequestDto = (PathRequestDto) target;
+
+        if (pathRequestDto.getPath() == null) {
+            throw new InvalidRequestDataException("Невалидный или отсутствующий путь");
+        }
+
         Path path = Paths.get(pathRequestDto.getPath());
 
 //        if (path.startsWith("/")) {

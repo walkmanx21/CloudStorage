@@ -123,11 +123,20 @@ public class MinioService {
                         .stream(inputStream, file.getSize(), -1)
                         .contentType(file.getContentType())
                         .build());
-                log.info(file.getOriginalFilename() + " через minio-client загружен");
             } catch (Exception e) {
-                log.warn("Зашли в catch блок minio-service");
                 throw new MinioServiceException(e.getMessage(), e);
             }
         });
+    }
+
+    public InputStream getObject(String bucket, String object) {
+        try {
+            return minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(object)
+                    .build());
+        } catch (Exception e) {
+            throw new MinioServiceException(e.getMessage(), e);
+        }
     }
 }

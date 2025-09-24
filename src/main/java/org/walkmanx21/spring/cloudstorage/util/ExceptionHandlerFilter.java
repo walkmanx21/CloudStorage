@@ -1,5 +1,6 @@
 package org.walkmanx21.spring.cloudstorage.util;
 
+import io.minio.errors.ErrorResponseException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
@@ -36,11 +37,11 @@ public class ExceptionHandlerFilter {
     public void handleUsernameNotFoundException() {
     }
 
-//    @ExceptionHandler({ErrorResponseException.class, ResourceNotFoundException.class})
-//    @ResponseStatus(HttpStatus.NOT_FOUND)
-//    public ErrorResponseDto handleErrorResponse() {
-//        return new ErrorResponseDto("The resource was not found on the specified path");
-//    }
+    @ExceptionHandler({ErrorResponseException.class, ResourceNotFoundException.class})
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ErrorResponseDto handleErrorResponse() {
+        return new ErrorResponseDto("Файл/папка не существует");
+    }
 
     @ExceptionHandler(ParentDirectoryNotExistException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -59,5 +60,11 @@ public class ExceptionHandlerFilter {
     public ErrorResponseDto handleMaxUploadSizeExceededException() {
         log.info("Поймали MaxUploadSizeExceededException");
         return new ErrorResponseDto("Загружаемый размер файла/файлов превышает лимит в 4ГБ");
+    }
+
+    @ExceptionHandler(DownloadException.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    public ErrorResponseDto handleDownloadException() {
+        return new ErrorResponseDto("Ошибка загрузки");
     }
 }
