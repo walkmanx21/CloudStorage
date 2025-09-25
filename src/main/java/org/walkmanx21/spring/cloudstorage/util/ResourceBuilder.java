@@ -21,7 +21,7 @@ public class ResourceBuilder {
         }
     }
 
-    public Resource build(Path requestPath, Item item) {
+    public Resource build(Item item) {
         Path path = Paths.get(item.objectName());
 
         if (item.objectName().endsWith("/")) {
@@ -40,14 +40,6 @@ public class ResourceBuilder {
         }
     }
 
-    public Resource build2(String path, Item item) {
-        Path object = Paths.get(path);
-        if (path.endsWith("/")) {
-            return buildDirectory(object);
-        } else {
-            return buildFile(object, item.size());
-        }
-    }
 
     public Directory buildDirectory(Path object) {
         String parent = object.getParent() == null ? "/" : object.getParent() + "/";

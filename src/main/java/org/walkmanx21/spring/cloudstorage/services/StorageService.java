@@ -73,18 +73,17 @@ public class StorageService {
             item = items.get(0);
         else
             throw new ResourceNotFoundException();
-        return resourceBuilder.build2(path, item);
+        return resourceBuilder.build(path, item);
     }
 
 
-    public List<Resource> getDirectoryContents(PathRequestDto pathRequestDto){
-        Path path = Paths.get(pathRequestDto.getPath());
-        String fullPath = getFullObject(pathRequestDto.getPath());
-        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullPath, false);
+    public List<Resource> getDirectoryContents(String path){
+        String fullObject = getFullObject(path);
+        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         List<Resource> resources = new ArrayList<>();
         for (Item item : items) {
-            if (!item.objectName().equals(fullPath))
-                resources.add(resourceBuilder.build(path, item));
+            if (!item.objectName().equals(fullObject))
+                resources.add(resourceBuilder.build(item));
         }
         return resources;
     }
