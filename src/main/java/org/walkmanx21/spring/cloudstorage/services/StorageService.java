@@ -94,12 +94,12 @@ public class StorageService {
         minioService.removeObject(ROOT_BUCKET, fullPath);
     }
 
-    public List<Resource> uploadResources(PathRequestDto pathRequestDto, List<MultipartFile> files) {
-        String destinationDirectory = getFullObject(pathRequestDto.getPath());
+    public List<Resource> uploadResources(String path, List<MultipartFile> files) {
+        String fullObject = getFullObject(path);
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
         for(MultipartFile file : files) {
-            boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, destinationDirectory + file.getOriginalFilename());
+            boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject + file.getOriginalFilename());
 
             if (!fileExist)
                 filesMap.put(file.getOriginalFilename(), file);
@@ -107,11 +107,11 @@ public class StorageService {
                 throw new ResourceAlreadyExistException();
         }
 
-        minioService.uploadResources(ROOT_BUCKET, destinationDirectory, filesMap);
+        minioService.uploadResources(ROOT_BUCKET, fullObject, filesMap);
         List<Resource> resources = new ArrayList<>();
         filesMap.forEach((key, file) -> {
-            Path path = Paths.get(pathRequestDto.getPath() + file.getOriginalFilename());
-            resources.add(resourceBuilder.buildFile(path, file.getSize()));
+            Path object = Paths.get(path + file.getOriginalFilename());
+            resources.add(resourceBuilder.buildFile(object, file.getSize()));
         });
 
         return resources;

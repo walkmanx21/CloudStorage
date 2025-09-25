@@ -38,12 +38,14 @@ public class ResourceController {
     }
 
     @GetMapping
-    public ResponseEntity<Resource> showResourceData(@RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
+    public ResponseEntity<Resource> showResourceData(
+            @RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
         return ResponseEntity.ok(storageService.getResourceData(path));
     }
 
     @GetMapping("/download")
-    public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
+    public ResponseEntity<StreamingResponseBody> downloadResource(
+            @RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
         String resourceName = Paths.get(path).getFileName().toString();
         ContentDisposition contentDisposition = ContentDisposition.attachment()
                 .filename(resourceName, StandardCharsets.UTF_8)
@@ -58,14 +60,15 @@ public class ResourceController {
     @GetMapping("/move")
     public ResponseEntity<Resource> moveOrRenameResource(
             @RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String from,
-            @RequestParam @NotBlank @Size(max = 1024, message = "Поле to должно быть не более 1024 символов") String to
-    ) {
+            @RequestParam @NotBlank @Size(max = 1024, message = "Поле to должно быть не более 1024 символов") String to) {
         return ResponseEntity.ok(storageService.moveOrRenameResource(from, to));
     }
 
     @PostMapping
-    public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, @RequestParam("object") List<MultipartFile> files) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(pathRequestDto, files));
+    public ResponseEntity<List<Resource>> uploadResources(
+            @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path,
+            @RequestParam("object") List<MultipartFile> files) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(path, files));
     }
 
 
