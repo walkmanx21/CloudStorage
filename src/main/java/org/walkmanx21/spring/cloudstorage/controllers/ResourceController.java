@@ -43,8 +43,8 @@ public class ResourceController {
     }
 
     @GetMapping("/download")
-    public ResponseEntity<StreamingResponseBody> downloadResource(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
-        String resourceName = Paths.get(pathRequestDto.getPath()).getFileName().toString();
+    public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
+        String resourceName = Paths.get(path).getFileName().toString();
         ContentDisposition contentDisposition = ContentDisposition.attachment()
                 .filename(resourceName, StandardCharsets.UTF_8)
                 .build();
@@ -52,7 +52,7 @@ public class ResourceController {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
-                .body(storageService.downloadResource(pathRequestDto));
+                .body(storageService.downloadResource(path));
     }
 
     @GetMapping("/move")

@@ -1,6 +1,5 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
-import io.minio.*;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
@@ -67,8 +66,8 @@ public class StorageService {
     }
 
     public Resource getResourceData(String path) {
-        String fullPath = getFullPath(path);
-        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullPath, false);
+        String fullObject = getFullObject(path);
+        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         Item item;
         if (!items.isEmpty())
             item = items.get(0);
@@ -80,7 +79,7 @@ public class StorageService {
 
     public List<Resource> getDirectoryContents(PathRequestDto pathRequestDto){
         Path path = Paths.get(pathRequestDto.getPath());
-        String fullPath = getFullPath(pathRequestDto.getPath());
+        String fullPath = getFullObject(pathRequestDto.getPath());
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullPath, false);
         List<Resource> resources = new ArrayList<>();
         for (Item item : items) {
@@ -91,12 +90,12 @@ public class StorageService {
     }
 
     public void removeResource(PathRequestDto pathRequestDto) {
-        String fullPath = getFullPath(pathRequestDto.getPath());
+        String fullPath = getFullObject(pathRequestDto.getPath());
         minioService.removeObject(ROOT_BUCKET, fullPath);
     }
 
     public List<Resource> uploadResources(PathRequestDto pathRequestDto, List<MultipartFile> files) {
-        String destinationDirectory = getFullPath(pathRequestDto.getPath());
+        String destinationDirectory = getFullObject(pathRequestDto.getPath());
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
         for(MultipartFile file : files) {
@@ -118,9 +117,9 @@ public class StorageService {
         return resources;
     }
 
-    public StreamingResponseBody downloadResource(PathRequestDto pathRequestDto) {
+    public StreamingResponseBody downloadResource(String requestObject) {
         String userDirectory = getUserRootDirectory();
-        String fullPath = getFullPath(pathRequestDto.getPath());
+        String fullPath = getFullObject(requestObject);
 
         boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullPath);
         if (!resourceExist)
@@ -149,11 +148,11 @@ public class StorageService {
         return "user-" + myUserDetails.getUser().getId() + "-files/";
     }
 
-    private String getFullPath(String path) {
-        if (path.contains(getUserRootDirectory()))
-            return path;
+    private String getFullObject(String requestObject) {
+        if (requestObject.contains(getUserRootDirectory()))
+            return requestObject;
         else
-            return  getUserRootDirectory() + path;
+            return  getUserRootDirectory() + requestObject;
     }
 
     private void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
