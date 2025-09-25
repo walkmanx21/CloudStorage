@@ -73,8 +73,9 @@ public class ResourceController {
 
 
     @DeleteMapping
-    public ResponseEntity<Void> deleteResource(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
-        storageService.removeResource(pathRequestDto);
+    public ResponseEntity<Void> deleteResource(
+            @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
+        storageService.removeResource(path);
         return ResponseEntity.noContent().build();
     }
 

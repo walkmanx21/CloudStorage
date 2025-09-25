@@ -57,7 +57,6 @@ public class ExceptionHandlerFilter {
     @ExceptionHandler(MaxUploadSizeExceededException.class)
     @ResponseStatus(HttpStatus.CONFLICT)
     public ErrorResponseDto handleMaxUploadSizeExceededException() {
-        log.info("Поймали MaxUploadSizeExceededException");
         return new ErrorResponseDto("Загружаемый размер файла/файлов превышает лимит в 4ГБ");
     }
 

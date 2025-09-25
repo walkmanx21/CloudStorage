@@ -89,8 +89,8 @@ public class StorageService {
         return resources;
     }
 
-    public void removeResource(PathRequestDto pathRequestDto) {
-        String fullPath = getFullObject(pathRequestDto.getPath());
+    public void removeResource(String object) {
+        String fullPath = getFullObject(object);
         minioService.removeObject(ROOT_BUCKET, fullPath);
     }
 
@@ -139,7 +139,7 @@ public class StorageService {
         String newObject = getUserRootDirectory() + to;
         minioService.copyObject(ROOT_BUCKET, oldObject, newObject);
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
-        removeResource(new PathRequestDto(from));
+        removeResource(from);
         return resourceBuilder.build(to, item);
     }
 
