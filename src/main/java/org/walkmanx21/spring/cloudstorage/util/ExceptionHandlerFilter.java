@@ -4,6 +4,7 @@ import io.minio.errors.ErrorResponseException;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.support.DefaultMessageSourceResolvable;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
@@ -69,27 +70,24 @@ public class ExceptionHandlerFilter {
     @ExceptionHandler(BindException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponseDto handleBindException(BindException e) {
-        BindingResult bindingResult = e.getBindingResult();
-        StringBuilder builder = new StringBuilder();
-        List<FieldError> fieldErrors = bindingResult.getFieldErrors();
-        fieldErrors.forEach(error -> builder.append(error.getDefaultMessage()).append("; "));
-        return new ErrorResponseDto(builder.toString());
+        List<FieldError> fieldErrors = e.getBindingResult().getFieldErrors();
+        List<String> errors = fieldErrors.stream()
+                .map(DefaultMessageSourceResolvable::getDefaultMessage)
+                .toList();
+        return errorResponseDtoBuilder(errors);
     }
-
-//    @ExceptionHandler(ConstraintViolationException.class)
-//    @ResponseStatus(HttpStatus.BAD_REQUEST)
-//    public ErrorResponseDto handleConstraintViolationException(ConstraintViolationException e) {
-//        return new ErrorResponseDto(e.getConstraintViolations().stream()
-//                .map(ConstraintViolation::getMessage).toList().toString());
-//    }
 
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    public ResponseEntity<?> handleConstraintViolationException(ConstraintViolationException e) {
-        return ResponseEntity.badRequest()
-                .contentType(MediaType.APPLICATION_JSON)
-                .body("message: " +
-                (e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage).toList().toString()));
+    public ErrorResponseDto handleConstraintViolationException(ConstraintViolationException e) {
+        List<String> errors = e.getConstraintViolations().stream()
+                .map(ConstraintViolation::getMessage).toList();
+        return errorResponseDtoBuilder(errors);
+    }
+
+    private ErrorResponseDto errorResponseDtoBuilder(List<String> errors) {
+        StringBuilder builder = new StringBuilder();
+        errors.forEach(error -> builder.append(error).append("; "));
+        return new ErrorResponseDto(builder.toString());
     }
 }

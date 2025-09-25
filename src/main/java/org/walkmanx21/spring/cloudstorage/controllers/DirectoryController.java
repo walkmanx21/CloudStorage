@@ -20,11 +20,11 @@ public class DirectoryController {
 
     @GetMapping
     public ResponseEntity<List<Resource>> getDirectoryContents(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
-        return new ResponseEntity<>(storageService.getDirectoryContents(pathRequestDto), HttpStatus.OK);
+        return ResponseEntity.ok(storageService.getDirectoryContents(pathRequestDto));
     }
 
     @PostMapping
     public ResponseEntity<Resource> createDirectory(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
-        return new ResponseEntity<>(storageService.createDirectory(pathRequestDto), HttpStatus.OK);
+        return ResponseEntity.ok(storageService.createDirectory(pathRequestDto));
     }
 }

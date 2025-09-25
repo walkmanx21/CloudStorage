@@ -33,6 +33,16 @@ public class ResourceBuilder {
         }
     }
 
+    public Resource build(String object, Item item) {
+        Path path = Paths.get(object);
+        String parent = path.getParent() == null ? "/" : path.getParent() + "/";
+        if (item.objectName().endsWith("/")) {
+            return buildDirectory(parent, path);
+        } else {
+            return buildFile(parent, path, item.size());
+        }
+    }
+
     public Directory buildDirectory(String parent, Path path) {
          return Directory.builder()
                 .path(parent.replace("\\", "/"))

@@ -79,7 +79,7 @@ public class MinioService {
                 .iterator().hasNext();
     }
 
-    public List<Item> getDirectoryContents(String bucket, String prefix, boolean recursive) {
+    public List<Item> getListObjects(String bucket, String prefix, boolean recursive) {
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucket)
                 .prefix(prefix)
@@ -98,7 +98,7 @@ public class MinioService {
     }
 
     public void removeObject(String bucket, String object) {
-        List<Item> items = getDirectoryContents(bucket, object, true);
+        List<Item> items = getListObjects(bucket, object, true);
         if (items.isEmpty())
             throw new ResourceNotFoundException();
         for (Item item : items) {
@@ -134,6 +134,21 @@ public class MinioService {
             return minioClient.getObject(GetObjectArgs.builder()
                     .bucket(bucket)
                     .object(object)
+                    .build());
+        } catch (Exception e) {
+            throw new MinioServiceException(e.getMessage(), e);
+        }
+    }
+
+    public void copyObject(String bucket, String oldObject, String newObject) {
+        try {
+            minioClient.copyObject(CopyObjectArgs.builder()
+                    .bucket(bucket)
+                    .object(newObject)
+                    .source(CopySource.builder()
+                            .bucket(bucket)
+                            .object(oldObject)
+                            .build())
                     .build());
         } catch (Exception e) {
             throw new MinioServiceException(e.getMessage(), e);

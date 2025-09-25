@@ -27,6 +27,6 @@ public class AuthController {
 
     @PostMapping("/sign-up")
     public ResponseEntity <UserResponseDto> registration (@RequestBody @Valid UserRequestDto userRequestDto, HttpServletRequest request) {
-        return new ResponseEntity<>(userService.register(userRequestDto, request), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(userRequestDto, request));
     }
 }

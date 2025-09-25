@@ -16,6 +16,6 @@ public class UserController {
 
     @GetMapping("/api/user/me")
     public ResponseEntity<UserResponseDto> getCurrentUser() {
-        return new ResponseEntity<>(userService.getCurrentUser(), HttpStatus.OK);
+        return ResponseEntity.ok(userService.getCurrentUser());
     }
 }

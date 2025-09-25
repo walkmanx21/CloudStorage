@@ -39,7 +39,7 @@ public class ResourceController {
 
     @GetMapping
     public ResponseEntity<Resource> showResourceData(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
-        return new ResponseEntity<>(storageService.getResourceData(pathRequestDto), HttpStatus.OK);
+        return ResponseEntity.ok(storageService.getResourceData(pathRequestDto));
     }
 
     @GetMapping("/download")
@@ -57,15 +57,15 @@ public class ResourceController {
 
     @GetMapping("/move")
     public ResponseEntity<Resource> moveOrRenameResource(
-            @RequestParam @NotBlank @Size(max = 10, message = "Поле path должно быть не более 10 символов") String from,
-            @RequestParam @NotBlank @Size(max = 1024, message = "Path field must not be longer than 1024 characters.") String to
+            @RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String from,
+            @RequestParam @NotBlank @Size(max = 1024, message = "Поле to должно быть не более 1024 символов") String to
     ) {
-        return null;
+        return ResponseEntity.ok(storageService.moveOrRenameResource(from, to));
     }
 
     @PostMapping
     public ResponseEntity<List<Resource>> uploadResources(@ModelAttribute @Valid PathRequestDto pathRequestDto, @RequestParam("object") List<MultipartFile> files) {
-        return new ResponseEntity<>(storageService.uploadResources(pathRequestDto, files), HttpStatus.CREATED);
+        return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(pathRequestDto, files));
     }
 
 

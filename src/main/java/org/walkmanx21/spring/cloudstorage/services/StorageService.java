@@ -3,13 +3,10 @@ package org.walkmanx21.spring.cloudstorage.services;
 import io.minio.*;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.autoconfigure.jdbc.DataSourceTransactionManagerAutoConfiguration;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.ErrorResponseException;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
@@ -21,7 +18,6 @@ import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -80,7 +76,7 @@ public class StorageService {
     public List<Resource> getDirectoryContents(PathRequestDto pathRequestDto){
         Path path = Paths.get(pathRequestDto.getPath());
         String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
-        List<Item> items = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, false);
+        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullPath, false);
         List<Resource> resources = new ArrayList<>();
         for (Item item : items) {
             if (!item.objectName().equals(fullPath))
@@ -135,14 +131,23 @@ public class StorageService {
         };
     }
 
+    public Resource moveOrRenameResource(String from, String to) {
+        String oldObject = getUserRootDirectory() + from;
+        String newObject = getUserRootDirectory() + to;
+        minioService.copyObject(ROOT_BUCKET, oldObject, newObject);
+        Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
+        removeResource(new PathRequestDto(from));
+        return resourceBuilder.build(to, item);
+    }
+
     private String getUserRootDirectory() {
         MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return "user-" + myUserDetails.getUser().getId() + "-files/";
     }
 
-    private ZipOutputStream downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
+    private void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-            List<Item> directoryContents = minioService.getDirectoryContents(ROOT_BUCKET, fullPath, true);
+            List<Item> directoryContents = minioService.getListObjects(ROOT_BUCKET, fullPath, true);
             directoryContents.forEach(object -> {
                 if (!object.isDir()) {
                     String entryName = object.objectName().substring(userDirectory.length());
@@ -155,16 +160,16 @@ public class StorageService {
                     }
                 }
             });
-            return zipOutputStream;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
     }
 
-    private InputStream downloadFile(OutputStream outputStream, String fullPath) {
+
+
+    private void downloadFile(OutputStream outputStream, String fullPath) {
         try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
             inputStream.transferTo(outputStream);
-            return inputStream;
         } catch (IOException e) {
             throw new DownloadException();
         }
