@@ -14,48 +14,56 @@ import java.nio.file.Paths;
 public class ResourceBuilder {
 
     public Resource build(Path path, String fullPath, Long size) {
-        String parent = path.getParent() == null ? "/" : path.getParent() + "/";
         if (fullPath.endsWith("/")) {
-            return buildDirectory(parent, path);
+            return buildDirectory(path);
         } else {
-            return buildFile(parent, path, size);
+            return buildFile(path, size);
         }
     }
 
     public Resource build(Path requestPath, Item item) {
         Path path = Paths.get(item.objectName());
-        String parent = requestPath == null ? "/" : requestPath + "/";
 
         if (item.objectName().endsWith("/")) {
-            return buildDirectory(parent, path);
+            return buildDirectory(path);
         } else {
-            return buildFile(parent, path, item.size());
+            return buildFile(path, item.size());
         }
     }
 
     public Resource build(String object, Item item) {
         Path path = Paths.get(object);
-        String parent = path.getParent() == null ? "/" : path.getParent() + "/";
         if (item.objectName().endsWith("/")) {
-            return buildDirectory(parent, path);
+            return buildDirectory(path);
         } else {
-            return buildFile(parent, path, item.size());
+            return buildFile(path, item.size());
         }
     }
 
-    public Directory buildDirectory(String parent, Path path) {
+    public Resource build2(String path, Item item) {
+        Path object = Paths.get(path);
+        if (path.endsWith("/")) {
+            return buildDirectory(object);
+        } else {
+            return buildFile(object, item.size());
+        }
+    }
+
+    public Directory buildDirectory(Path object) {
+        String parent = object.getParent() == null ? "/" : object.getParent() + "/";
          return Directory.builder()
                 .path(parent.replace("\\", "/"))
                 .type(ResourceType.DIRECTORY)
-                .name(path.getFileName().toString() + "/")
+                .name(object.getFileName().toString() + "/")
                 .build();
     }
 
-    public File buildFile(String parent, Path path, long size) {
+    public File buildFile(Path object, long size) {
+        String parent = object.getParent() == null ? "/" : object.getParent() + "/";
         return File.builder()
                 .path(parent.replace("\\", "/"))
                 .type(ResourceType.FILE)
-                .name(path.getFileName().toString())
+                .name(object.getFileName().toString())
                 .size(size)
                 .build();
     }

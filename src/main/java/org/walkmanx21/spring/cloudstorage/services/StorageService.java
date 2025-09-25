@@ -66,16 +66,21 @@ public class StorageService {
         minioService.createDirectory(ROOT_BUCKET, userDirectory);
     }
 
-    public Resource getResourceData(PathRequestDto pathRequestDto) {
-        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
-        StatObjectResponse stat = minioService.getResourceData(ROOT_BUCKET, fullPath);
-        return resourceBuilder.build(Paths.get(pathRequestDto.getPath()), fullPath, stat.size());
+    public Resource getResourceData(String path) {
+        String fullPath = getFullPath(path);
+        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullPath, false);
+        Item item;
+        if (!items.isEmpty())
+            item = items.get(0);
+        else
+            throw new ResourceNotFoundException();
+        return resourceBuilder.build2(path, item);
     }
 
 
     public List<Resource> getDirectoryContents(PathRequestDto pathRequestDto){
         Path path = Paths.get(pathRequestDto.getPath());
-        String fullPath = getUserRootDirectory() + pathRequestDto.getPath();
+        String fullPath = getFullPath(pathRequestDto.getPath());
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullPath, false);
         List<Resource> resources = new ArrayList<>();
         for (Item item : items) {
@@ -86,12 +91,12 @@ public class StorageService {
     }
 
     public void removeResource(PathRequestDto pathRequestDto) {
-        String fullPath = (getUserRootDirectory() + pathRequestDto.getPath()).replace("//", "/");
+        String fullPath = getFullPath(pathRequestDto.getPath());
         minioService.removeObject(ROOT_BUCKET, fullPath);
     }
 
     public List<Resource> uploadResources(PathRequestDto pathRequestDto, List<MultipartFile> files) {
-        String destinationDirectory = getUserRootDirectory() + pathRequestDto.getPath();
+        String destinationDirectory = getFullPath(pathRequestDto.getPath());
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
         for(MultipartFile file : files) {
@@ -107,8 +112,7 @@ public class StorageService {
         List<Resource> resources = new ArrayList<>();
         filesMap.forEach((key, file) -> {
             Path path = Paths.get(pathRequestDto.getPath() + file.getOriginalFilename());
-            String parent = path.getParent() == null ? "/" : path.getParent() + "/";
-            resources.add(resourceBuilder.buildFile(parent, path, file.getSize()));
+            resources.add(resourceBuilder.buildFile(path, file.getSize()));
         });
 
         return resources;
@@ -116,7 +120,7 @@ public class StorageService {
 
     public StreamingResponseBody downloadResource(PathRequestDto pathRequestDto) {
         String userDirectory = getUserRootDirectory();
-        String fullPath = (userDirectory + pathRequestDto.getPath()).replace("//", "/");
+        String fullPath = getFullPath(pathRequestDto.getPath());
 
         boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullPath);
         if (!resourceExist)
@@ -143,6 +147,13 @@ public class StorageService {
     private String getUserRootDirectory() {
         MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return "user-" + myUserDetails.getUser().getId() + "-files/";
+    }
+
+    private String getFullPath(String path) {
+        if (path.contains(getUserRootDirectory()))
+            return path;
+        else
+            return  getUserRootDirectory() + path;
     }
 
     private void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {

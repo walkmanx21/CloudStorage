@@ -38,8 +38,8 @@ public class ResourceController {
     }
 
     @GetMapping
-    public ResponseEntity<Resource> showResourceData(@ModelAttribute @Valid PathRequestDto pathRequestDto) {
-        return ResponseEntity.ok(storageService.getResourceData(pathRequestDto));
+    public ResponseEntity<Resource> showResourceData(@RequestParam @NotBlank @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
+        return ResponseEntity.ok(storageService.getResourceData(path));
     }
 
     @GetMapping("/download")
