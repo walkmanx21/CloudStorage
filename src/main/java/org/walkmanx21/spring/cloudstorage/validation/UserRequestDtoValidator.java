@@ -1,4 +1,4 @@
-package org.walkmanx21.spring.cloudstorage.util;
+package org.walkmanx21.spring.cloudstorage.validation;
 
 import org.springframework.stereotype.Component;
 import org.springframework.validation.Errors;

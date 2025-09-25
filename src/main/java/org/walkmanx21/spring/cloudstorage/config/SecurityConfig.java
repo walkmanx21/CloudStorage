@@ -24,7 +24,7 @@ import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
-import org.walkmanx21.spring.cloudstorage.util.UserRequestDtoValidator;
+import org.walkmanx21.spring.cloudstorage.validation.UserRequestDtoValidator;
 
 import java.util.List;
 

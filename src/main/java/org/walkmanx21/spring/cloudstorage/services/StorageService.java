@@ -8,7 +8,6 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import org.walkmanx21.spring.cloudstorage.dto.PathRequestDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
@@ -42,13 +41,13 @@ public class StorageService {
         }
     }
 
-    public Resource createDirectory(PathRequestDto pathRequestDto) {
-        Path directory = Paths.get(pathRequestDto.getPath());
-        String parent = directory.getParent() == null ? getUserRootDirectory() :  getUserRootDirectory() + directory.getParent().toString().replace("\\", "/") + "/";
-        String fullPathToDirectory = getUserRootDirectory() + directory + "/";
+    public Resource createDirectory(String path) {
+        Path object = Paths.get(path);
+        String fullObject = getFullObject(path);
+        String parent = object.getParent() == null ? getUserRootDirectory() :  getUserRootDirectory() + object.getParent().toString().replace("\\", "/") + "/";
 
         boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
-        boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullPathToDirectory);
+        boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
 
         if(!parentDirectoryExist)
             throw new ParentDirectoryNotExistException();
@@ -56,8 +55,8 @@ public class StorageService {
         if(directoryToCreateExist)
             throw new ResourceAlreadyExistException();
 
-        minioService.createDirectory(ROOT_BUCKET, fullPathToDirectory.replace("\\", "/"));
-        return resourceBuilder.build(directory, fullPathToDirectory, 0L);
+        minioService.createDirectory(ROOT_BUCKET, fullObject);
+        return resourceBuilder.build(object, fullObject, 0L);
     }
 
     public void createUserRootDirectory(int userId) {

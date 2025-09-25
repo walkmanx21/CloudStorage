@@ -79,9 +79,7 @@ public class ExceptionHandlerFilter {
     @ExceptionHandler(ConstraintViolationException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponseDto handleConstraintViolationException(ConstraintViolationException e) {
-        List<String> errors = e.getConstraintViolations().stream()
-                .map(ConstraintViolation::getMessage).toList();
-        return errorResponseDtoBuilder(errors);
+        return new ErrorResponseDto(e.getMessage());
     }
 
     private ErrorResponseDto errorResponseDtoBuilder(List<String> errors) {

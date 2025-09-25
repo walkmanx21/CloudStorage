@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.UserRequestDto;
 import org.walkmanx21.spring.cloudstorage.dto.UserResponseDto;
 import org.walkmanx21.spring.cloudstorage.services.UserService;
-import org.walkmanx21.spring.cloudstorage.util.UserRequestDtoValidator;
+import org.walkmanx21.spring.cloudstorage.validation.UserRequestDtoValidator;
 
 @RestController
 @RequestMapping("/api/auth")
