@@ -135,6 +135,14 @@ public class StorageService {
     public Resource moveOrRenameResource(String from, String to) {
         String oldObject = getFullObject(from);
         String newObject = getFullObject(to);
+
+        String parentOfNewObject = Paths.get(newObject).getParent().toString().replace("\\", "/");
+
+        boolean oldObjectExist = minioService.checkResourceExist(ROOT_BUCKET, oldObject);
+        boolean parentOfNewObjectExist = minioService.checkResourceExist(ROOT_BUCKET, parentOfNewObject);
+        if (!oldObjectExist || !parentOfNewObjectExist)
+            throw new ResourceNotFoundException();
+
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
         items.forEach(item -> {
             minioService.copyObject(ROOT_BUCKET, item.objectName(), newObject);
