@@ -143,6 +143,10 @@ public class StorageService {
         if (!oldObjectExist || !parentOfNewObjectExist)
             throw new ResourceNotFoundException();
 
+        boolean newFileAlreadyExist = minioService.checkResourceExist(ROOT_BUCKET, newObject);
+        if (newFileAlreadyExist)
+            throw new ResourceAlreadyExistException();
+
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
         items.forEach(item -> {
             minioService.copyObject(ROOT_BUCKET, item.objectName(), newObject);
