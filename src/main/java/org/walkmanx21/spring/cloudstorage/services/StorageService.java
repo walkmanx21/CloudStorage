@@ -135,9 +135,12 @@ public class StorageService {
     public Resource moveOrRenameResource(String from, String to) {
         String oldObject = getFullObject(from);
         String newObject = getFullObject(to);
-        minioService.copyObject(ROOT_BUCKET, oldObject, newObject); //TODO разобраться с выбрасываемым исключением
+        List<Item> items = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
+        items.forEach(item -> {
+            minioService.copyObject(ROOT_BUCKET, item.objectName(), newObject);
+            minioService.removeObject(ROOT_BUCKET, item.objectName());
+        });
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
-        minioService.removeObject(ROOT_BUCKET, oldObject);
         return resourceBuilder.build(to, item);
     }
 

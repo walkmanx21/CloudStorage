@@ -11,7 +11,7 @@ import java.lang.annotation.*;
 @Retention(RetentionPolicy.RUNTIME)
 @Constraint(validatedBy = PathConstraintValidator.class)
 @Documented
-@NotBlank
+//@NotBlank
 @Size(max = 1024, message = "Поле from должно быть не более 1024 символов")
 public @interface ValidPath {
     String message() default "Невалидный либо отсутствующий путь";
