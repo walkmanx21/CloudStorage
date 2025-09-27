@@ -5,7 +5,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.walkmanx21.spring.cloudstorage.models.Resource;
+import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
 
@@ -26,7 +26,7 @@ public class DirectoryController {
             }
     )
     @GetMapping
-    public ResponseEntity<List<Resource>> getDirectoryContents(
+    public ResponseEntity<List<ResourceDto>> getDirectoryContents(
             @RequestParam @ValidPath String path) {
         return ResponseEntity.ok(storageService.getDirectoryContents(path));
     }
@@ -40,7 +40,7 @@ public class DirectoryController {
             }
     )
     @PostMapping
-    public ResponseEntity<Resource> createDirectory(
+    public ResponseEntity<ResourceDto> createDirectory(
             @RequestParam @ValidPath String path) {
         return ResponseEntity.ok(storageService.createDirectory(path));
     }

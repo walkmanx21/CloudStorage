@@ -12,9 +12,9 @@ import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
-import org.walkmanx21.spring.cloudstorage.models.Resource;
+import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
-import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
+import org.walkmanx21.spring.cloudstorage.util.ResourceDtoBuilder;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -31,7 +31,7 @@ import java.util.zip.ZipOutputStream;
 public class StorageService {
 
     private final MinioService minioService;
-    private final ResourceBuilder resourceBuilder;
+    private final ResourceDtoBuilder resourceDtoBuilder;
     private static final String ROOT_BUCKET = "user-files";
 
     @PostConstruct
@@ -41,10 +41,9 @@ public class StorageService {
         }
     }
 
-    public Resource createDirectory(String path) {
-        Path object = Paths.get(path);
+    public ResourceDto createDirectory(String path) {
         String fullObject = getFullObject(path);
-        String parent = object.getParent() == null ? getUserRootDirectory() :  getUserRootDirectory() + object.getParent().toString().replace("\\", "/") + "/";
+        String parent = getParent(path);
 
         boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
         boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
@@ -56,7 +55,7 @@ public class StorageService {
             throw new ResourceAlreadyExistException();
 
         minioService.createDirectory(ROOT_BUCKET, fullObject);
-        return resourceBuilder.build(object, fullObject, 0L);
+        return resourceDtoBuilder.buildDirectoryDto(path);
     }
 
     public void createUserRootDirectory(int userId) {
@@ -64,7 +63,7 @@ public class StorageService {
         minioService.createDirectory(ROOT_BUCKET, userDirectory);
     }
 
-    public Resource getResourceData(String path) {
+    public ResourceDto getResourceData(String path) {
         String fullObject = getFullObject(path);
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         Item item;
@@ -72,19 +71,19 @@ public class StorageService {
             item = items.get(0);
         else
             throw new ResourceNotFoundException();
-        return resourceBuilder.build(path, item);
+        return resourceDtoBuilder.build(path, item);
     }
 
 
-    public List<Resource> getDirectoryContents(String path){
+    public List<ResourceDto> getDirectoryContents(String path){
         String fullObject = getFullObject(path);
         String userRootDirectory = getUserRootDirectory();
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
-        List<Resource> resources = new ArrayList<>();
+        List<ResourceDto> resources = new ArrayList<>();
         for (Item item : items) {
             if (!item.objectName().equals(fullObject)) {
                 String object = item.objectName().substring(userRootDirectory.length());
-                resources.add(resourceBuilder.build(object, item));
+                resources.add(resourceDtoBuilder.build(object, item));
             }
         }
         return resources;
@@ -95,7 +94,7 @@ public class StorageService {
         minioService.removeObject(ROOT_BUCKET, fullPath);
     }
 
-    public List<Resource> uploadResources(String path, List<MultipartFile> files) {
+    public List<ResourceDto> uploadResources(String path, List<MultipartFile> files) {
         String fullObject = getFullObject(path);
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
@@ -109,10 +108,10 @@ public class StorageService {
         }
 
         minioService.uploadResources(ROOT_BUCKET, fullObject, filesMap);
-        List<Resource> resources = new ArrayList<>();
+        List<ResourceDto> resources = new ArrayList<>();
         filesMap.forEach((key, file) -> {
-            Path object = Paths.get(path + file.getOriginalFilename());
-            resources.add(resourceBuilder.buildFile(object, file.getSize()));
+            String object = path + file.getOriginalFilename();
+            resources.add(resourceDtoBuilder.buildFileDto(object, file.getSize()));
         });
 
         return resources;
@@ -135,7 +134,7 @@ public class StorageService {
         };
     }
 
-    public Resource moveOrRenameResource(String from, String to) {
+    public ResourceDto moveOrRenameResource(String from, String to) {
         String oldObject = getFullObject(from);
         String newObject = getFullObject(to);
 
@@ -156,19 +155,19 @@ public class StorageService {
             minioService.removeObject(ROOT_BUCKET, item.objectName());
         });
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
-        return resourceBuilder.build(to, item);
+        return resourceDtoBuilder.build(to, item);
     }
 
-    public List<Resource> searchResources(String query) {
+    public List<ResourceDto> searchResources(String query) {
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, getUserRootDirectory(), true);
         items.remove(0);
-        List<Resource> foundResources = new ArrayList<>();
+        List<ResourceDto> foundResources = new ArrayList<>();
         items.forEach(item -> {
             Path path = Paths.get(item.objectName());
             String fileName = path.getFileName().toString();
             if (fileName.contains(query)) {
                 String object = item.objectName().substring(getUserRootDirectory().length());
-                foundResources.add(resourceBuilder.build(object, item));
+                foundResources.add(resourceDtoBuilder.build(object, item));
             }
         });
         return foundResources;
@@ -212,6 +211,11 @@ public class StorageService {
         } catch (IOException e) {
             throw new DownloadException();
         }
+    }
+
+    private String getParent (String path) {
+        Path object = Paths.get(path);
+        return object.getParent() == null ? getUserRootDirectory() :  getUserRootDirectory() + object.getParent().toString().replace("\\", "/") + "/";
     }
 
 
