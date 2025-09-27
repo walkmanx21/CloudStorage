@@ -78,11 +78,14 @@ public class StorageService {
 
     public List<Resource> getDirectoryContents(String path){
         String fullObject = getFullObject(path);
+        String userRootDirectory = getUserRootDirectory();
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         List<Resource> resources = new ArrayList<>();
         for (Item item : items) {
-            if (!item.objectName().equals(fullObject))
-                resources.add(resourceBuilder.build(item));
+            if (!item.objectName().equals(fullObject)) {
+                String object = item.objectName().substring(userRootDirectory.length());
+                resources.add(resourceBuilder.build(object, item));
+            }
         }
         return resources;
     }
@@ -156,6 +159,20 @@ public class StorageService {
         return resourceBuilder.build(to, item);
     }
 
+    public List<Resource> searchResources(String query) {
+        List<Item> items = minioService.getListObjects(ROOT_BUCKET, getUserRootDirectory(), true);
+        List<Resource> foundResources = new ArrayList<>();
+        items.forEach(item -> {
+            Path path = Paths.get(item.objectName());
+            String fileName = path.getFileName().toString();
+            if (fileName.contains(query)) {
+                String object = item.objectName().substring(getUserRootDirectory().length());
+                foundResources.add(resourceBuilder.build(object, item));
+            }
+        });
+        return foundResources;
+    }
+
     private String getUserRootDirectory() {
         MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
         return "user-" + myUserDetails.getUser().getId() + "-files/";
@@ -165,7 +182,7 @@ public class StorageService {
         if (requestObject.contains(getUserRootDirectory()))
             return requestObject;
         else
-            return  getUserRootDirectory() + requestObject;
+            return  (getUserRootDirectory() + requestObject).replace("//", "/");
     }
 
     private void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
@@ -187,8 +204,6 @@ public class StorageService {
             throw new RuntimeException(e);
         }
     }
-
-
 
     private void downloadFile(OutputStream outputStream, String fullPath) {
         try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {

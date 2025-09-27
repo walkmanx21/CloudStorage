@@ -1,5 +1,6 @@
 package org.walkmanx21.spring.cloudstorage.controllers;
 
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -46,6 +47,11 @@ public class ResourceController {
     @GetMapping("/move")
     public ResponseEntity<Resource> moveOrRenameResource(@RequestParam @ValidPath String from, @RequestParam @ValidPath String to) {
         return ResponseEntity.ok(storageService.moveOrRenameResource(from, to));
+    }
+
+    @GetMapping("/search")
+    public ResponseEntity<List<Resource>> searchResources(@RequestParam @NotBlank String query) {
+        return ResponseEntity.ok(storageService.searchResources(query));
     }
 
     @PostMapping
