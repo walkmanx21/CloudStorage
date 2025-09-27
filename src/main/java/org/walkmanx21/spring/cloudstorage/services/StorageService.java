@@ -161,6 +161,7 @@ public class StorageService {
 
     public List<Resource> searchResources(String query) {
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, getUserRootDirectory(), true);
+        items.remove(0);
         List<Resource> foundResources = new ArrayList<>();
         items.forEach(item -> {
             Path path = Paths.get(item.objectName());

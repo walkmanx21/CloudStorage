@@ -36,7 +36,9 @@ public class ExceptionHandlerFilter {
         return new ErrorResponseDto(e.getMessage());
     }
 
-    @ExceptionHandler({ErrorResponseException.class, ResourceNotFoundException.class})
+    @ExceptionHandler({
+            ErrorResponseException.class,
+            ResourceNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponseDto handleErrorResponse() {
         return new ErrorResponseDto("Файл/папка не существует");

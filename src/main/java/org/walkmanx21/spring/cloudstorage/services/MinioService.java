@@ -58,18 +58,6 @@ public class MinioService {
         }
     }
 
-    public StatObjectResponse getResourceData(String bucket, String path) {
-        StatObjectResponse stat;
-        try {
-            stat = minioClient.statObject(StatObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(path).build());
-        } catch (Exception e) {
-            throw new MinioServiceException(e.getMessage(), e);
-        }
-        return stat;
-    }
-
     public boolean checkResourceExist(String bucket, String prefix) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(bucket)

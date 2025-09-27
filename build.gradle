@@ -36,6 +36,7 @@ dependencies {
     implementation "org.modelmapper:modelmapper:${versions.modelmapper}"
     implementation "io.lettuce:lettuce-core:${versions.lettuce}"
     implementation "io.minio:minio:${versions.minio}"
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.8.13'
 
     compileOnly 'org.projectlombok:lombok'
 
