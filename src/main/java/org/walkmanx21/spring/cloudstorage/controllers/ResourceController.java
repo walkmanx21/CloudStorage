@@ -1,5 +1,7 @@
 package org.walkmanx21.spring.cloudstorage.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
@@ -26,11 +28,27 @@ public class ResourceController {
 
     private final StorageService storageService;
 
+    @Operation(
+            summary = "Получить информацию о ресурсе",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON с информацией о ресурсе"),
+                    @ApiResponse(responseCode = "400", description = "Невалидный или отсутствующий путь"),
+                    @ApiResponse(responseCode = "404", description = "Ресурс не найден")
+            }
+    )
     @GetMapping
     public ResponseEntity<Resource> showResourceData(@RequestParam @ValidPath String path) {
         return ResponseEntity.ok(storageService.getResourceData(path));
     }
 
+    @Operation(
+            summary = "Скачать ресурс",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Бинарное содержимое файла"),
+                    @ApiResponse(responseCode = "400", description = "Невалидный или отсутствующий путь"),
+                    @ApiResponse(responseCode = "404", description = "Ресурс не найден")
+            }
+    )
     @GetMapping("/download")
     public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam @ValidPath String path) {
         String resourceName = Paths.get(path).getFileName().toString();
@@ -44,24 +62,51 @@ public class ResourceController {
                 .body(storageService.downloadResource(path));
     }
 
+    @Operation(
+            summary = "Переименовать или переместить ресурс",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON с конечным ресурсом"),
+                    @ApiResponse(responseCode = "404", description = "Ресурс не найден"),
+                    @ApiResponse(responseCode = "409", description = "Ресурс лежащий по пути to уже существует"),
+            }
+    )
     @GetMapping("/move")
     public ResponseEntity<Resource> moveOrRenameResource(@RequestParam @ValidPath String from, @RequestParam @ValidPath String to) {
         return ResponseEntity.ok(storageService.moveOrRenameResource(from, to));
     }
 
+    @Operation(
+            summary = "Поиск ресурса",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "JSON с найденным ресурсом")
+            }
+    )
     @GetMapping("/search")
     public ResponseEntity<List<Resource>> searchResources(@RequestParam @NotBlank String query) {
         return ResponseEntity.ok(storageService.searchResources(query));
     }
 
-    @PostMapping
+    @Operation(
+            summary = "Upload ресурса",
+            responses = {
+                    @ApiResponse(responseCode = "201", description = "Коллекция загруженных ресурсов"),
+                    @ApiResponse(responseCode = "409", description = "Файл уже существует")
+            }
+    )
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<Resource>> uploadResources(
             @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path,
-            @RequestParam("object") List<MultipartFile> files) {
+            @RequestPart("object") List<MultipartFile> files) {
         return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(path, files));
     }
 
-
+    @Operation(
+            summary = "Удаление ресурса",
+            responses = {
+                    @ApiResponse(responseCode = "204", description = "Тело ответа пустое"),
+                    @ApiResponse(responseCode = "404", description = "Ресурс не найден")
+            }
+    )
     @DeleteMapping
     public ResponseEntity<Void> deleteResource(@RequestParam @ValidPath String path) {
         storageService.removeResource(path);

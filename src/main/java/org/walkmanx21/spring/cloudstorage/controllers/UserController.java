@@ -1,5 +1,7 @@
 package org.walkmanx21.spring.cloudstorage.controllers;
 
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -14,6 +16,12 @@ public class UserController {
 
     private final UserService userService;
 
+    @Operation(
+            summary = "Вывести текущего пользователя",
+            responses = {
+                    @ApiResponse(responseCode = "200", description = "Текущий пользователь")
+            }
+    )
     @GetMapping("/api/user/me")
     public ResponseEntity<UserResponseDto> getCurrentUser() {
         return ResponseEntity.ok(userService.getCurrentUser());
