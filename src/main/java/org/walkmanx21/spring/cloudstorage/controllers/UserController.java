@@ -3,7 +3,6 @@ package org.walkmanx21.spring.cloudstorage.controllers;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -24,6 +23,6 @@ public class UserController {
     )
     @GetMapping("/api/user/me")
     public ResponseEntity<UserResponseDto> getCurrentUser() {
-        return ResponseEntity.ok(userService.getCurrentUser());
+        return ResponseEntity.ok(userService.getCurrentUserResponseDto());
     }
 }

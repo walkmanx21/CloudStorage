@@ -1,6 +1,5 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -13,6 +12,7 @@ import org.walkmanx21.spring.cloudstorage.dto.UserResponseDto;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.UserRole;
 import org.walkmanx21.spring.cloudstorage.repositories.UserRepository;
+import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.UserMapper;
 
 @Service
@@ -37,7 +37,7 @@ public class UserService {
         return userMapper.convertToUserResponseDto(user);
     }
 
-    public UserResponseDto getCurrentUser() {
+    public UserResponseDto getCurrentUserResponseDto() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         return new UserResponseDto(userDetails.getUsername());

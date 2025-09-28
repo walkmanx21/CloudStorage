@@ -2,6 +2,7 @@ package org.walkmanx21.spring.cloudstorage.controllers;
 
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import jakarta.validation.constraints.Size;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -27,7 +28,7 @@ public class DirectoryController {
     )
     @GetMapping
     public ResponseEntity<List<ResourceDto>> getDirectoryContents(
-            @RequestParam @ValidPath String path) {
+            @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path) {
         return ResponseEntity.ok(storageService.getDirectoryContents(path));
     }
 
