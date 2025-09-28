@@ -46,4 +46,3 @@ server:
     session:
       cookie:
         name: SESSION
-
