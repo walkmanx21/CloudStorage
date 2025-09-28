@@ -36,8 +36,8 @@ public class AuthController {
             }
     )
     @PostMapping("/sign-up")
-    public ResponseEntity <UserResponseDto> registration (@RequestBody @Valid UserRequestDto userRequestDto, HttpServletRequest request) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(userRequestDto, request));
+    public ResponseEntity <UserResponseDto> registration (@RequestBody @Valid UserRequestDto userRequestDto) {
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.register(userRequestDto));
     }
 
     @Operation(

@@ -43,6 +43,7 @@ public class UserServiceIT {
     @Test
     public void whenUserRequestDtoComeThanRegister() {
         UserRequestDto userRequestDto = new UserRequestDto("testUser123", "testPassword123");
+
         userService.register(userRequestDto);
         Optional<User> mayBeUser = userRepository.findUserByUsername(userRequestDto.getUsername());
 
