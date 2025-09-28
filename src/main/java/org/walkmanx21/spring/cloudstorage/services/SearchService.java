@@ -27,6 +27,7 @@ public class SearchService {
     }
 
     public UserResource getUserResourceInfo() {
+        //test
         return null;
     }
 
