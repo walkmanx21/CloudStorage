@@ -85,7 +85,7 @@ public class MinioService {
         return items;
     }
 
-    public void removeObject(String bucket, String object) {
+    public List <Item> removeObject(String bucket, String object) {
         List<Item> items = getListObjects(bucket, object, true);
         if (items.isEmpty())
             throw new ResourceNotFoundException();
@@ -99,6 +99,7 @@ public class MinioService {
                 throw new MinioServiceException(e.getMessage(), e);
             }
         }
+        return items;
     }
 
     public void uploadResources(String bucket, String destinationDirectory, Map<String, MultipartFile> files) {

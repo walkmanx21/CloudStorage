@@ -61,7 +61,7 @@ public class StorageService {
             throw new ResourceAlreadyExistException();
 
         minioService.createDirectory(ROOT_BUCKET, fullObject);
-        searchService.writeUserResourceToDatabase(path);
+        searchService.writeUserResourceToDatabase(fullObject);
 
         return resourceDtoBuilder.buildDirectoryDto(path);
     }
@@ -95,7 +95,8 @@ public class StorageService {
         if (path.startsWith("/"))
             path = path.substring(1);
         String fullObject = getFullObject(path);
-        minioService.removeObject(ROOT_BUCKET, fullObject);
+        List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, fullObject);
+        deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName()));
         searchService.removeUserResourceFromDatabase(path);
     }
 
@@ -117,7 +118,7 @@ public class StorageService {
         filesMap.forEach((key, file) -> {
             String object = path + file.getOriginalFilename();
             resources.add(resourceDtoBuilder.buildFileDto(object, file.getSize()));
-            searchService.writeUserResourceToDatabase(object);
+            searchService.writeUserResourceToDatabase(getFullObject(object));
         });
 
         return resources;
@@ -145,7 +146,7 @@ public class StorageService {
             from = from.substring(1);
 
         if (to.startsWith("/"))
-            from = to.substring(1);
+            to = to.substring(1);
 
         String oldObject = getFullObject(from);
         String newObject = getFullObject(to);
@@ -161,13 +162,13 @@ public class StorageService {
             throw new ResourceAlreadyExistException();
 
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
-        String finalFrom = from;
         items.forEach(item -> {
             minioService.copyObject(ROOT_BUCKET, item.objectName(), newObject);
-            searchService.writeUserResourceToDatabase(to);
+            List<Item> newItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
+            newItems.forEach(newItem -> searchService.writeUserResourceToDatabase(newItem.objectName()));
 
-            minioService.removeObject(ROOT_BUCKET, item.objectName());
-            searchService.removeUserResourceFromDatabase(finalFrom);
+            List<Item> oldItems = minioService.removeObject(ROOT_BUCKET, item.objectName());
+            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName()));
 
         });
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
