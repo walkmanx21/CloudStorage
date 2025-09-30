@@ -9,6 +9,7 @@ import org.walkmanx21.spring.cloudstorage.models.UserResource;
 import org.walkmanx21.spring.cloudstorage.repositories.UserResourceRepository;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 
 @Service
@@ -18,7 +19,7 @@ public class SearchService {
     private final UserResourceRepository userResourceRepository;
 
     public void writeUserResourceToDatabase(String resource) {
-        userResourceRepository.save(new UserResource(getCurrentUser(), resource));
+        userResourceRepository.save(new UserResource(getCurrentUser(), resource, LocalDateTime.now()));
     }
 
     public void removeUserResourceFromDatabase(String resource) {

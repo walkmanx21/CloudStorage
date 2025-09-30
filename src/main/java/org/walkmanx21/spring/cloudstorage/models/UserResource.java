@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.LocalDateTime;
+
 @Getter
 @Setter
 @Entity
@@ -25,8 +27,12 @@ public class UserResource {
     @Column(name = "resource")
     private String resource;
 
-    public UserResource(User user, String resource) {
+    @Column(name = "created_at")
+    private LocalDateTime createdAt;
+
+    public UserResource(User user, String resource, LocalDateTime createdAt) {
         this.user = user;
         this.resource = resource;
+        this.createdAt = createdAt;
     }
 }
