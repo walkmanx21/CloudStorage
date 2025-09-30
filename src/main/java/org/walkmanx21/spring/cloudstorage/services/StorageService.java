@@ -4,23 +4,31 @@ import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
+import org.walkmanx21.spring.cloudstorage.dto.OldDirectoryDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
+import org.walkmanx21.spring.cloudstorage.models.Resource;
+import org.walkmanx21.spring.cloudstorage.models.ResourceType;
+import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.ResourceDtoBuilder;
+import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -34,6 +42,7 @@ public class StorageService {
     private final ResourceDtoBuilder resourceDtoBuilder;
     private final SearchService searchService;
     private static final String ROOT_BUCKET = "user-files";
+    private final ResourceMapper resourceMapper;
 
     @PostConstruct
     public void init() {
@@ -47,27 +56,35 @@ public class StorageService {
         minioService.createDirectory(ROOT_BUCKET, userDirectory);
     }
 
-    public ResourceDto createDirectory(String path) {
+    public DirectoryDto createDirectory(String path) {
         String fullObject = getFullObject(path);
         String parent = getParent(path);
 
         boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
         boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
 
-        if(!parentDirectoryExist) {
+        if (!parentDirectoryExist) {
             log.warn("Родительской папки {} не существует", parent);
             throw new ParentDirectoryNotExistException();
         }
 
-        if(directoryToCreateExist) {
+        if (directoryToCreateExist) {
             log.warn("Создаваемая папка {} уже существует", fullObject);
             throw new ResourceAlreadyExistException();
         }
 
         minioService.createDirectory(ROOT_BUCKET, fullObject);
-        searchService.writeUserResourceToDatabase(fullObject);
 
-        return resourceDtoBuilder.buildDirectoryDto(path);
+        Resource resource = Resource.builder()
+                .user(getCurrentUser())
+                .resource(path)
+                .type(ResourceType.DIRECTORY)
+                .createdAt(LocalDateTime.now())
+                .build();
+
+        searchService.saveUserResourceToDatabase(resource);
+
+        return resourceMapper.convertToDirectoryDto(resource);
     }
 
     public ResourceDto getResourceData(String path) {
@@ -83,7 +100,7 @@ public class StorageService {
         return resourceDtoBuilder.build(path, item);
     }
 
-    public List<ResourceDto> getDirectoryContents(String path){
+    public List<ResourceDto> getDirectoryContents(String path) {
         String fullObject = getFullObject(path);
         String userRootDirectory = getUserRootDirectory();
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
@@ -110,7 +127,7 @@ public class StorageService {
         String fullObject = getFullObject(path);
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
-        for(MultipartFile file : files) {
+        for (MultipartFile file : files) {
             boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject + file.getOriginalFilename());
 
             if (!fileExist) {
@@ -126,7 +143,7 @@ public class StorageService {
         filesMap.forEach((key, file) -> {
             String object = path + file.getOriginalFilename();
             resources.add(resourceDtoBuilder.buildFileDto(object, file.getSize()));
-            searchService.writeUserResourceToDatabase(getFullObject(object));
+//            searchService.saveUserResourceToDatabase(getFullObject(object));
         });
 
         return resources;
@@ -186,7 +203,7 @@ public class StorageService {
         items.forEach(item -> {
             String newKey = item.objectName().replace(oldObject, newObject);
             minioService.copyObject(ROOT_BUCKET, item.objectName(), newKey);
-            searchService.writeUserResourceToDatabase(newKey);
+//            searchService.saveUserResourceToDatabase(newKey);
         });
 
         items.forEach(item -> {
@@ -222,7 +239,7 @@ public class StorageService {
         if (requestObject.startsWith(getUserRootDirectory()))
             return requestObject;
         else
-            return  (getUserRootDirectory() + requestObject).replace("//", "/");
+            return (getUserRootDirectory() + requestObject).replace("//", "/");
     }
 
     private String getParent(String path) {
@@ -263,6 +280,12 @@ public class StorageService {
             log.warn("Ошибка скачивания файла {}", fullPath);
             throw new DownloadException();
         }
+    }
+
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        return userDetails.getUser();
     }
 
 }

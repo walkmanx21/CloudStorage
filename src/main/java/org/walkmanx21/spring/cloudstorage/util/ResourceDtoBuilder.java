@@ -2,8 +2,8 @@ package org.walkmanx21.spring.cloudstorage.util;
 
 import io.minio.messages.Item;
 import org.springframework.stereotype.Component;
-import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
-import org.walkmanx21.spring.cloudstorage.dto.FileDto;
+import org.walkmanx21.spring.cloudstorage.dto.OldDirectoryDto;
+import org.walkmanx21.spring.cloudstorage.dto.OldFileDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDtoType;
 
@@ -22,20 +22,20 @@ public class ResourceDtoBuilder {
     }
 
 
-    public DirectoryDto buildDirectoryDto(String path) {
+    public OldDirectoryDto buildDirectoryDto(String path) {
         Path object = Paths.get(path);
         String parent = object.getParent() == null ? "/" : object.getParent() + "/";
-        return DirectoryDto.builder()
+        return OldDirectoryDto.builder()
                 .path(parent.replace("\\", "/"))
                 .type(ResourceDtoType.DIRECTORY)
                 .name(object.getFileName().toString() + "/")
                 .build();
     }
 
-    public FileDto buildFileDto(String path, long size) {
+    public OldFileDto buildFileDto(String path, long size) {
         Path object = Paths.get(path);
         String parent = object.getParent() == null ? "/" : object.getParent() + "/";
-        return FileDto.builder()
+        return OldFileDto.builder()
                 .path(parent.replace("\\", "/"))
                 .type(ResourceDtoType.FILE)
                 .name(object.getFileName().toString())

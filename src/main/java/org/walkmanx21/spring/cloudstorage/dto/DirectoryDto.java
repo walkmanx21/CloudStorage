@@ -1,8 +1,13 @@
 package org.walkmanx21.spring.cloudstorage.dto;
 
-import lombok.experimental.SuperBuilder;
+import lombok.Getter;
+import lombok.Setter;
 
-@SuperBuilder
-public class DirectoryDto extends ResourceDto {
+@Getter
+@Setter
+public class DirectoryDto {
 
+    private String path;
+    private String name;
+    private ResourceDtoType type;
 }

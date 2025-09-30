@@ -3,6 +3,7 @@ package org.walkmanx21.spring.cloudstorage.dto;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 @JsonTypeInfo(
@@ -11,11 +12,12 @@ import lombok.experimental.SuperBuilder;
         property = "type"
 )
 @JsonSubTypes({
-        @JsonSubTypes.Type(value = DirectoryDto.class, name = "DIRECTORY"),
-        @JsonSubTypes.Type(value = FileDto.class, name = "FILE")
+        @JsonSubTypes.Type(value = OldDirectoryDto.class, name = "DIRECTORY"),
+        @JsonSubTypes.Type(value = OldFileDto.class, name = "FILE")
 })
 @SuperBuilder
 @Getter
+@NoArgsConstructor
 public abstract class ResourceDto {
     private String path;
     private String name;
