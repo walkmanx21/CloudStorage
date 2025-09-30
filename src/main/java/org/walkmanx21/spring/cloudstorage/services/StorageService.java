@@ -20,6 +20,7 @@ import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.models.ResourceType;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
+import org.walkmanx21.spring.cloudstorage.util.OldResourceDtoBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceDtoBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
@@ -39,10 +40,11 @@ import java.util.zip.ZipOutputStream;
 public class StorageService {
 
     private final MinioService minioService;
-    private final ResourceDtoBuilder resourceDtoBuilder;
+    private final OldResourceDtoBuilder oldResourceDtoBuilder;
     private final SearchService searchService;
     private static final String ROOT_BUCKET = "user-files";
     private final ResourceMapper resourceMapper;
+    private final ResourceDtoBuilder resourceDtoBuilder;
 
     @PostConstruct
     public void init() {
@@ -97,30 +99,16 @@ public class StorageService {
             log.warn("Ресурс {}, по которому запрашиваются данные, не найден", fullObject);
             throw new ResourceNotFoundException();
         }
-        return resourceDtoBuilder.build(path, item);
+        return oldResourceDtoBuilder.build(path, item);
     }
 
     public List<ResourceDto> getDirectoryContents(String path) {
         String fullObject = getFullObject(path);
-        String userRootDirectory = getUserRootDirectory();
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         List<ResourceDto> resourceDtos = new ArrayList<>();
         for (Item item : items) {
-            if (!item.objectName().equals(fullObject) && item.objectName().endsWith("/")) {
-                Resource resource = Resource.builder()
-                        .resource(item.objectName().substring(userRootDirectory.length()))
-                        .type(ResourceType.DIRECTORY)
-                        .build();
-                resourceDtos.add(resourceMapper.convertToDirectoryDto(resource));
-            }
-
-            if (!item.objectName().equals(fullObject) && !item.objectName().endsWith("/")) {
-                Resource resource = Resource.builder()
-                        .resource(item.objectName().substring(userRootDirectory.length()))
-                        .type(ResourceType.FILE)
-                        .size(item.size())
-                        .build();
-                resourceDtos.add(resourceMapper.convertToFileDto(resource));
+            if (!item.objectName().equals(fullObject)) {
+                resourceDtos.add(resourceDtoBuilder.build(getUserRootDirectory(), item));
             }
         }
         return resourceDtos;
@@ -154,7 +142,7 @@ public class StorageService {
         List<OldResourceDto> resources = new ArrayList<>();
         filesMap.forEach((key, file) -> {
             String object = path + file.getOriginalFilename();
-            resources.add(resourceDtoBuilder.buildFileDto(object, file.getSize()));
+            resources.add(oldResourceDtoBuilder.buildFileDto(object, file.getSize()));
 //            searchService.saveUserResourceToDatabase(getFullObject(object));
         });
 
@@ -224,7 +212,7 @@ public class StorageService {
         });
 
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
-        return resourceDtoBuilder.build(to, item);
+        return oldResourceDtoBuilder.build(to, item);
     }
 
     public List<OldResourceDto> searchResources(String query) {
@@ -236,7 +224,7 @@ public class StorageService {
             String fileName = path.getFileName().toString();
             if (fileName.contains(query)) {
                 String object = item.objectName().substring(getUserRootDirectory().length());
-                foundResources.add(resourceDtoBuilder.build(object, item));
+                foundResources.add(oldResourceDtoBuilder.build(object, item));
             }
         });
         return foundResources;

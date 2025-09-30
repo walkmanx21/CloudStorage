@@ -1,45 +1,43 @@
 package org.walkmanx21.spring.cloudstorage.util;
 
 import io.minio.messages.Item;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.walkmanx21.spring.cloudstorage.dto.OldDirectoryDto;
-import org.walkmanx21.spring.cloudstorage.dto.OldFileDto;
-import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
-import org.walkmanx21.spring.cloudstorage.dto.ResourceDtoType;
+import org.walkmanx21.spring.cloudstorage.dto.*;
+import org.walkmanx21.spring.cloudstorage.models.Resource;
+import org.walkmanx21.spring.cloudstorage.models.ResourceType;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Component
+@RequiredArgsConstructor
 public class ResourceDtoBuilder {
 
-    public OldResourceDto build(String object, Item item) {
+    private final ResourceMapper resourceMapper;
+
+    public ResourceDto build (String userRootDirectory, Item item) {
         if (item.objectName().endsWith("/")) {
-            return buildDirectoryDto(object);
+            return buildDirectoryDto(userRootDirectory, item);
         } else {
-            return buildFileDto(object, item.size());
+            return buildFileDto(userRootDirectory, item);
         }
     }
 
-
-    public OldDirectoryDto buildDirectoryDto(String path) {
-        Path object = Paths.get(path);
-        String parent = object.getParent() == null ? "/" : object.getParent() + "/";
-        return OldDirectoryDto.builder()
-                .path(parent.replace("\\", "/"))
-                .type(ResourceDtoType.DIRECTORY)
-                .name(object.getFileName().toString() + "/")
+    public DirectoryDto buildDirectoryDto(String userRootDirectory, Item item) {
+        Resource resource = Resource.builder()
+                .resource(item.objectName().substring(userRootDirectory.length()))
+                .type(ResourceType.DIRECTORY)
                 .build();
+        return resourceMapper.convertToDirectoryDto(resource);
     }
 
-    public OldFileDto buildFileDto(String path, long size) {
-        Path object = Paths.get(path);
-        String parent = object.getParent() == null ? "/" : object.getParent() + "/";
-        return OldFileDto.builder()
-                .path(parent.replace("\\", "/"))
-                .type(ResourceDtoType.FILE)
-                .name(object.getFileName().toString())
-                .size(size)
+    public FileDto buildFileDto(String userRootDirectory, Item item) {
+        Resource resource = Resource.builder()
+                .resource(item.objectName().substring(userRootDirectory.length()))
+                .type(ResourceType.FILE)
+                .size(item.size())
                 .build();
+        return resourceMapper.convertToFileDto(resource);
     }
 }
