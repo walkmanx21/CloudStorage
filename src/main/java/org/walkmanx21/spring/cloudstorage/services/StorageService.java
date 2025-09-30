@@ -105,32 +105,23 @@ public class StorageService {
         String userRootDirectory = getUserRootDirectory();
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         List<ResourceDto> resourceDtos = new ArrayList<>();
-        List<OldResourceDto> resources = new ArrayList<>();
         for (Item item : items) {
-            if (!item.objectName().equals(fullObject) && item.size() == 0) {
+            if (!item.objectName().equals(fullObject) && item.objectName().endsWith("/")) {
                 Resource resource = Resource.builder()
                         .resource(item.objectName().substring(userRootDirectory.length()))
                         .type(ResourceType.DIRECTORY)
                         .build();
                 resourceDtos.add(resourceMapper.convertToDirectoryDto(resource));
-
-//                String object = item.objectName().substring(userRootDirectory.length());
-//                resources.add(resourceDtoBuilder.build(object, item));
             }
 
-            if (!item.objectName().equals(fullObject) && item.size() != 0) {
+            if (!item.objectName().equals(fullObject) && !item.objectName().endsWith("/")) {
                 Resource resource = Resource.builder()
                         .resource(item.objectName().substring(userRootDirectory.length()))
                         .type(ResourceType.FILE)
-                        .size(items.size())
+                        .size(item.size())
                         .build();
                 resourceDtos.add(resourceMapper.convertToFileDto(resource));
-
-//                String object = item.objectName().substring(userRootDirectory.length());
-//                resources.add(resourceDtoBuilder.build(object, item));
             }
-
-
         }
         return resourceDtos;
     }

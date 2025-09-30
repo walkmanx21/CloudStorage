@@ -45,7 +45,7 @@ public class ResourceMapper {
                     .map(Resource::getResource, FileDto::setPath);
             mapper.using(ctx -> {
                 Path path = Paths.get(ctx.getSource().toString());
-                return path.getFileName().toString() + "/";
+                return path.getFileName().toString();
             }).map(Resource::getResource, FileDto::setName);
         });
     }
