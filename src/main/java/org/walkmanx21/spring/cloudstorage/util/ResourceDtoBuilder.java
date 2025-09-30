@@ -26,7 +26,7 @@ public class ResourceDtoBuilder {
 
     public DirectoryDto buildDirectoryDto(String userRootDirectory, Item item) {
         Resource resource = Resource.builder()
-                .resource(item.objectName().substring(userRootDirectory.length()))
+                .object(item.objectName().substring(userRootDirectory.length()))
                 .type(ResourceType.DIRECTORY)
                 .build();
         return resourceMapper.convertToDirectoryDto(resource);
@@ -34,7 +34,7 @@ public class ResourceDtoBuilder {
 
     public FileDto buildFileDto(String userRootDirectory, Item item) {
         Resource resource = Resource.builder()
-                .resource(item.objectName().substring(userRootDirectory.length()))
+                .object(item.objectName().substring(userRootDirectory.length()))
                 .type(ResourceType.FILE)
                 .size(item.size())
                 .build();

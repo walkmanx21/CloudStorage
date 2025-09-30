@@ -79,7 +79,7 @@ public class StorageService {
 
         Resource resource = Resource.builder()
                 .user(getCurrentUser())
-                .resource(path)
+                .object(path)
                 .type(ResourceType.DIRECTORY)
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -119,8 +119,7 @@ public class StorageService {
             path = path.substring(1);
         String fullObject = getFullObject(path);
         List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, fullObject);
-        deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName()));
-        searchService.removeUserResourceFromDatabase(path);
+        deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName().substring(getUserRootDirectory().length())));
     }
 
     public List<OldResourceDto> uploadResources(String path, List<MultipartFile> files) {

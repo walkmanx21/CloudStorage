@@ -9,6 +9,8 @@ import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.repositories.ResourceRepository;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 
+import java.util.Optional;
+
 @Service
 @RequiredArgsConstructor
 public class SearchService {
@@ -19,9 +21,9 @@ public class SearchService {
         resourceRepository.save(resource);
     }
 
-    public void removeUserResourceFromDatabase(String resource) {
-//        Optional<UserResource> userResource = userResourceRepository.findUserResourceByUserAndResource(getCurrentUser(), resource);
-//        userResource.ifPresent(userResourceRepository::delete);
+    public void removeUserResourceFromDatabase(String object) {
+        Optional<Resource> userResource = resourceRepository.findResourceByUserAndObject(getCurrentUser(), object);
+        userResource.ifPresent(resourceRepository::delete);
     }
 
     public Resource getUserResourceInfo() {

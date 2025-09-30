@@ -9,5 +9,5 @@ import java.util.Optional;
 
 @Repository
 public interface ResourceRepository extends JpaRepository <Resource, Integer> {
-    Optional<Resource> findUserResourceByUserAndResource(User user, String resource);
+    Optional<Resource> findResourceByUserAndObject(User user, String object);
 }

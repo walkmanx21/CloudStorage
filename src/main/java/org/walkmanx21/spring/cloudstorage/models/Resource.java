@@ -25,8 +25,8 @@ public class Resource {
     @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
-    @Column(name = "resource")
-    private String resource;
+    @Column(name = "object")
+    private String object;
 
     @Column(name = "type")
     @Enumerated(EnumType.STRING)

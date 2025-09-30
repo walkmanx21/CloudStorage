@@ -29,11 +29,11 @@ public class ResourceMapper {
                         Path parent = path.getParent();
                         return parent == null ? "/" : parent.toString().replace("\\", "/") + "/";
                     })
-                    .map(Resource::getResource, DirectoryDto::setPath);
+                    .map(Resource::getObject, DirectoryDto::setPath);
             mapper.using(ctx -> {
                 Path path = Paths.get(ctx.getSource().toString());
                 return path.getFileName().toString() + "/";
-            }).map(Resource::getResource, DirectoryDto::setName);
+            }).map(Resource::getObject, DirectoryDto::setName);
         });
 
         typeFileMap.addMappings(mapper -> {
@@ -42,11 +42,11 @@ public class ResourceMapper {
                         Path parent = path.getParent();
                         return parent == null ? "/" : parent.toString().replace("\\", "/") + "/";
                     })
-                    .map(Resource::getResource, FileDto::setPath);
+                    .map(Resource::getObject, FileDto::setPath);
             mapper.using(ctx -> {
                 Path path = Paths.get(ctx.getSource().toString());
                 return path.getFileName().toString();
-            }).map(Resource::getResource, FileDto::setName);
+            }).map(Resource::getObject, FileDto::setName);
         });
     }
 
