@@ -5,10 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class FileDto {
+public class FileDto extends ResourceDto {
 
-    private String path;
-    private String name;
-    private ResourceDtoType type;
     private long size;
 }

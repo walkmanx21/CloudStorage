@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
+import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
@@ -42,7 +43,7 @@ public class DirectoryController {
             }
     )
     @PostMapping
-    public ResponseEntity<DirectoryDto> createDirectory(
+    public ResponseEntity<ResourceDto> createDirectory(
             @RequestParam @ValidPath String path) {
         return ResponseEntity.ok(storageService.createDirectory(path));
     }

@@ -5,7 +5,7 @@ import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Getter
-public class OldFileDto extends ResourceDto {
+public class OldFileDto extends OldResourceDto {
 
     private long size;
 

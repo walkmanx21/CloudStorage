@@ -4,7 +4,7 @@ import io.minio.messages.Item;
 import org.springframework.stereotype.Component;
 import org.walkmanx21.spring.cloudstorage.dto.OldDirectoryDto;
 import org.walkmanx21.spring.cloudstorage.dto.OldFileDto;
-import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
+import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDtoType;
 
 import java.nio.file.Path;
@@ -13,7 +13,7 @@ import java.nio.file.Paths;
 @Component
 public class ResourceDtoBuilder {
 
-    public ResourceDto build(String object, Item item) {
+    public OldResourceDto build(String object, Item item) {
         if (item.objectName().endsWith("/")) {
             return buildDirectoryDto(object);
         } else {

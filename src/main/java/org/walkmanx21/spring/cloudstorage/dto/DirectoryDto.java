@@ -5,9 +5,6 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class DirectoryDto {
+public class DirectoryDto extends ResourceDto {
 
-    private String path;
-    private String name;
-    private ResourceDtoType type;
 }

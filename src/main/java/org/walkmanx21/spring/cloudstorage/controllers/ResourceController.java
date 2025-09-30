@@ -11,7 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
+import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
 
@@ -37,7 +37,7 @@ public class ResourceController {
             }
     )
     @GetMapping
-    public ResponseEntity<ResourceDto> showResourceData(@RequestParam @ValidPath String path) {
+    public ResponseEntity<OldResourceDto> showResourceData(@RequestParam @ValidPath String path) {
         return ResponseEntity.ok(storageService.getResourceData(path));
     }
 
@@ -71,7 +71,7 @@ public class ResourceController {
             }
     )
     @GetMapping("/move")
-    public ResponseEntity<ResourceDto> moveOrRenameResource(@RequestParam @ValidPath String from, @RequestParam @ValidPath String to) {
+    public ResponseEntity<OldResourceDto> moveOrRenameResource(@RequestParam @ValidPath String from, @RequestParam @ValidPath String to) {
         return ResponseEntity.ok(storageService.moveOrRenameResource(from, to));
     }
 
@@ -82,7 +82,7 @@ public class ResourceController {
             }
     )
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceDto>> searchResources(@RequestParam @NotBlank String query) {
+    public ResponseEntity<List<OldResourceDto>> searchResources(@RequestParam @NotBlank String query) {
         return ResponseEntity.ok(storageService.searchResources(query));
     }
 
@@ -94,7 +94,7 @@ public class ResourceController {
             }
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<ResourceDto>> uploadResources(
+    public ResponseEntity<List<OldResourceDto>> uploadResources(
             @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path,
             @RequestPart("object") List<MultipartFile> files) {
         return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(path, files));
