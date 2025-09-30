@@ -154,23 +154,36 @@ public class StorageService {
 
         boolean oldObjectExist = minioService.checkResourceExist(ROOT_BUCKET, oldObject);
         boolean parentOfNewObjectExist = minioService.checkResourceExist(ROOT_BUCKET, parentOfNewObject);
-        if (!oldObjectExist || !parentOfNewObjectExist)
+
+        if (!oldObjectExist) {
+            log.warn("Старого объекта {} не существует", oldObject);
             throw new ResourceNotFoundException();
+        }
+
+        if (!parentOfNewObjectExist) {
+            log.warn("Ролительской папки нового объекта {} не существует", parentOfNewObject);
+            throw new ResourceNotFoundException();
+        }
 
         boolean newFileAlreadyExist = minioService.checkResourceExist(ROOT_BUCKET, newObject);
-        if (newFileAlreadyExist)
+        if (newFileAlreadyExist) {
+            log.warn("Новый файл {} уже существует", newObject);
             throw new ResourceAlreadyExistException();
+        }
 
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
-        items.forEach(item -> {
-            minioService.copyObject(ROOT_BUCKET, item.objectName(), newObject);
-            List<Item> newItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
-            newItems.forEach(newItem -> searchService.writeUserResourceToDatabase(newItem.objectName()));
 
+        items.forEach(item -> {
+            String newKey = item.objectName().replace(oldObject, newObject);
+            minioService.copyObject(ROOT_BUCKET, item.objectName(), newKey);
+            searchService.writeUserResourceToDatabase(newKey);
+        });
+
+        items.forEach(item -> {
             List<Item> oldItems = minioService.removeObject(ROOT_BUCKET, item.objectName());
             oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName()));
-
         });
+
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
         return resourceDtoBuilder.build(to, item);
     }
