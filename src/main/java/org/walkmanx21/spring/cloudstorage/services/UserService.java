@@ -12,7 +12,6 @@ import org.walkmanx21.spring.cloudstorage.dto.UserResponseDto;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.UserRole;
 import org.walkmanx21.spring.cloudstorage.repositories.UserRepository;
-import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.UserMapper;
 
 @Service
@@ -31,7 +30,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
-        user.setUserDirectory(storageService.createUserRootDirectory(user.getId()));
+        user.setUserRootDirectory(storageService.createUserRootDirectory(user.getId()));
         sessionService.setSessionAttribute(user);
         return userMapper.convertToUserResponseDto(user);
     }

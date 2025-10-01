@@ -11,7 +11,8 @@ import java.time.LocalDateTime;
 @Component
 public class ResourceBuilder {
 
-    public Resource build (String userRootDirectory, User user, Item item) {
+    public Resource build (User user, Item item) {
+        String userRootDirectory = user.getUserRootDirectory();
         if (item.objectName().endsWith("/")) {
             return buildDirectory(user, item.objectName().substring(userRootDirectory.length()));
         } else {
@@ -37,4 +38,6 @@ public class ResourceBuilder {
                 .createdAt(LocalDateTime.now())
                 .build();
     }
+
+
 }

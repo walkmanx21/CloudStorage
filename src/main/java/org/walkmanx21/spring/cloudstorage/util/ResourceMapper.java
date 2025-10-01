@@ -7,7 +7,9 @@ import org.modelmapper.TypeMap;
 import org.springframework.stereotype.Component;
 import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
 import org.walkmanx21.spring.cloudstorage.dto.FileDto;
+import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
+import org.walkmanx21.spring.cloudstorage.models.ResourceType;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -56,5 +58,12 @@ public class ResourceMapper {
 
     public FileDto convertToFileDto(Resource resource) {
         return mapper.map(resource, FileDto.class);
+    }
+
+    public ResourceDto convertToResourceDto(Resource resource) {
+        if (resource.getType().equals(ResourceType.DIRECTORY))
+            return convertToDirectoryDto(resource);
+        else
+            return convertToFileDto(resource);
     }
 }

@@ -27,7 +27,6 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private UserRole role;
 
-
     @Transient
-    private String userDirectory;
+    private String userRootDirectory;
 }

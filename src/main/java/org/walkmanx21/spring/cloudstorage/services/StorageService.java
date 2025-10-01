@@ -17,12 +17,10 @@ import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistExce
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
-import org.walkmanx21.spring.cloudstorage.models.ResourceType;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.OldResourceDtoBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
-import org.walkmanx21.spring.cloudstorage.util.ResourceDtoBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
 import java.io.IOException;
@@ -30,7 +28,6 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.time.LocalDateTime;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -45,7 +42,6 @@ public class StorageService {
     private final SearchService searchService;
     private static final String ROOT_BUCKET = "user-files";
     private final ResourceMapper resourceMapper;
-    private final ResourceDtoBuilder resourceDtoBuilder;
     private final ResourceBuilder resourceBuilder;
 
     @PostConstruct
@@ -79,18 +75,8 @@ public class StorageService {
         }
 
         minioService.createDirectory(ROOT_BUCKET, fullObject);
-
-//        Resource resource = Resource.builder()
-//                .user(getCurrentUser())
-//                .object(path)
-//                .type(ResourceType.DIRECTORY)
-//                .createdAt(LocalDateTime.now())
-//                .build();
-
         Resource resource = resourceBuilder.buildDirectory(getCurrentUser(), path);
-
         searchService.saveUserResourceToDatabase(resource);
-
         return resourceMapper.convertToDirectoryDto(resource);
     }
 
@@ -113,7 +99,8 @@ public class StorageService {
         List<ResourceDto> resourceDtos = new ArrayList<>();
         for (Item item : items) {
             if (!item.objectName().equals(fullObject)) {
-                resourceDtos.add(resourceDtoBuilder.build(getUserRootDirectory(), item));
+                Resource resource = resourceBuilder.build(getCurrentUser(), item);
+                resourceDtos.add(resourceMapper.convertToResourceDto(resource));
             }
         }
         return resourceDtos;
