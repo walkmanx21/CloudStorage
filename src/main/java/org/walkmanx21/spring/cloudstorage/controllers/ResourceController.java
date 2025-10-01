@@ -11,8 +11,8 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
-import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
+import org.walkmanx21.spring.cloudstorage.services.SearchService;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
 
@@ -28,6 +28,7 @@ import java.util.List;
 public class ResourceController {
 
     private final StorageService storageService;
+    private final SearchService searchService;
 
     @Operation(
             summary = "Получить информацию о ресурсе",
@@ -83,8 +84,8 @@ public class ResourceController {
             }
     )
     @GetMapping("/search")
-    public ResponseEntity<List<OldResourceDto>> searchResources(@RequestParam @NotBlank String query) {
-        return ResponseEntity.ok(storageService.searchResources(query));
+    public ResponseEntity<List<ResourceDto>> searchResources(@RequestParam @NotBlank String query) {
+        return ResponseEntity.ok(searchService.searchResources(query));
     }
 
     @Operation(

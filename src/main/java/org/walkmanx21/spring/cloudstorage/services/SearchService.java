@@ -4,11 +4,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
+import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.repositories.ResourceRepository;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -26,7 +28,7 @@ public class SearchService {
         userResource.ifPresent(resourceRepository::delete);
     }
 
-    public Resource getUserResourceInfo() {
+    public List<ResourceDto> searchResources(String query) {
         //test
         return null;
     }

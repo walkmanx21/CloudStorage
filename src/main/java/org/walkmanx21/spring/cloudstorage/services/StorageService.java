@@ -15,11 +15,9 @@ import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
-import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
-import org.walkmanx21.spring.cloudstorage.util.OldResourceDtoBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
@@ -38,7 +36,6 @@ import java.util.zip.ZipOutputStream;
 public class StorageService {
 
     private final MinioService minioService;
-    private final OldResourceDtoBuilder oldResourceDtoBuilder;
     private final SearchService searchService;
     private static final String ROOT_BUCKET = "user-files";
     private final ResourceMapper resourceMapper;
@@ -204,31 +201,21 @@ public class StorageService {
 
         itemsToChange.forEach(item -> {
             List<Item> oldItems = minioService.removeObject(ROOT_BUCKET, item.objectName());
-            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName().substring(getCurrentUser().getUserRootDirectory().length())));
+            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName().substring(getUserRootDirectory().length())));
         });
 
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
         return resourceMapper.convertToResourceDto(resourceBuilder.build(getCurrentUser(), item));
     }
 
-    public List<OldResourceDto> searchResources(String query) {
-        List<Item> items = minioService.getListObjects(ROOT_BUCKET, getUserRootDirectory(), true);
-        items.remove(0);
-        List<OldResourceDto> foundResources = new ArrayList<>();
-        items.forEach(item -> {
-            Path path = Paths.get(item.objectName());
-            String fileName = path.getFileName().toString();
-            if (fileName.contains(query)) {
-                String object = item.objectName().substring(getUserRootDirectory().length());
-                foundResources.add(oldResourceDtoBuilder.build(object, item));
-            }
-        });
-        return foundResources;
+    private User getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
+        return userDetails.getUser();
     }
 
     private String getUserRootDirectory() {
-        MyUserDetails myUserDetails = (MyUserDetails) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        return "user-" + myUserDetails.getUser().getId() + "-files/";
+        return getCurrentUser().getUserRootDirectory();
     }
 
     private String getFullObject(String requestObject) {
@@ -278,10 +265,6 @@ public class StorageService {
         }
     }
 
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        return userDetails.getUser();
-    }
+
 
 }
