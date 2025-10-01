@@ -21,6 +21,7 @@ import org.walkmanx21.spring.cloudstorage.models.ResourceType;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
 import org.walkmanx21.spring.cloudstorage.util.OldResourceDtoBuilder;
+import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceDtoBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
@@ -45,6 +46,7 @@ public class StorageService {
     private static final String ROOT_BUCKET = "user-files";
     private final ResourceMapper resourceMapper;
     private final ResourceDtoBuilder resourceDtoBuilder;
+    private final ResourceBuilder resourceBuilder;
 
     @PostConstruct
     public void init() {
@@ -53,9 +55,10 @@ public class StorageService {
         }
     }
 
-    public void createUserRootDirectory(int userId) {
+    public String createUserRootDirectory(int userId) {
         String userDirectory = "user-" + userId + "-files/";
         minioService.createDirectory(ROOT_BUCKET, userDirectory);
+        return userDirectory;
     }
 
     public DirectoryDto createDirectory(String path) {
@@ -77,12 +80,14 @@ public class StorageService {
 
         minioService.createDirectory(ROOT_BUCKET, fullObject);
 
-        Resource resource = Resource.builder()
-                .user(getCurrentUser())
-                .object(path)
-                .type(ResourceType.DIRECTORY)
-                .createdAt(LocalDateTime.now())
-                .build();
+//        Resource resource = Resource.builder()
+//                .user(getCurrentUser())
+//                .object(path)
+//                .type(ResourceType.DIRECTORY)
+//                .createdAt(LocalDateTime.now())
+//                .build();
+
+        Resource resource = resourceBuilder.buildDirectory(getCurrentUser(), path);
 
         searchService.saveUserResourceToDatabase(resource);
 

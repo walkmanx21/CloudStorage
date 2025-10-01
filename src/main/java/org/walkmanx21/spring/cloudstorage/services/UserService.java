@@ -31,9 +31,8 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(user.getPassword()));
         user.setRole(UserRole.ROLE_USER);
         userRepository.save(user);
-        storageService.createUserRootDirectory(user.getId());
+        user.setUserDirectory(storageService.createUserRootDirectory(user.getId()));
         sessionService.setSessionAttribute(user);
-
         return userMapper.convertToUserResponseDto(user);
     }
 
