@@ -37,9 +37,10 @@ public class StorageService {
 
     private final MinioService minioService;
     private final SearchService searchService;
-    private static final String ROOT_BUCKET = "user-files";
     private final ResourceMapper resourceMapper;
     private final ResourceBuilder resourceBuilder;
+
+    private static final String ROOT_BUCKET = "user-files";
 
     @PostConstruct
     public void init() {

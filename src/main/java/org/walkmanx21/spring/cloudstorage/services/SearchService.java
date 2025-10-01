@@ -9,15 +9,22 @@ import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.repositories.ResourceRepository;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
+import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
+import javax.swing.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 public class SearchService {
 
     private final ResourceRepository resourceRepository;
+    private final ResourceMapper resourceMapper;
 
     public void saveUserResourceToDatabase(Resource resource) {
         resourceRepository.save(resource);
@@ -29,7 +36,23 @@ public class SearchService {
     }
 
     public List<ResourceDto> searchResources(String query) {
-        //test
+        var foundResources = resourceRepository.findResourceByObjectContains(query);
+        Set<ResourceDto> resourceDtos = new HashSet<>();
+//        foundResources.ifPresentOrElse(resources -> {
+//            resources.forEach(resource -> {
+//                Path path = Paths.get(resource.getObject());
+//                if (path.getFileName().toString().contains(query)) {
+//                    resourceDtos.add(resourceMapper.convertToResourceDto(resource));
+//                }
+//
+//                if (path.getParent().toString().contains(query)) {
+//
+//                }
+//
+//            });
+//        });
+
+        System.out.println();
         return null;
     }
 
