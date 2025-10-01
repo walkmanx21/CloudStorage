@@ -129,11 +129,13 @@ public class StorageService {
         }
 
         minioService.uploadResources(ROOT_BUCKET, fullObject, filesMap);
+        List<ResourceDto> resourceDtos = new ArrayList<>();
         List<OldResourceDto> resources = new ArrayList<>();
         filesMap.forEach((key, file) -> {
             String object = path + file.getOriginalFilename();
-            resources.add(oldResourceDtoBuilder.buildFileDto(object, file.getSize()));
-//            searchService.saveUserResourceToDatabase(getFullObject(object));
+            Resource resource = resourceBuilder.buildFile(getCurrentUser(), object, file.getSize());
+            resourceDtos.add(resourceMapper.convertToFileDto(resource));
+            searchService.saveUserResourceToDatabase(resource);
         });
 
         return resources;
