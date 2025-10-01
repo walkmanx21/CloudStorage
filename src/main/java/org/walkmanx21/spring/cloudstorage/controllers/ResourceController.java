@@ -72,7 +72,7 @@ public class ResourceController {
             }
     )
     @GetMapping("/move")
-    public ResponseEntity<OldResourceDto> moveOrRenameResource(@RequestParam @ValidPath String from, @RequestParam @ValidPath String to) {
+    public ResponseEntity<ResourceDto> moveOrRenameResource(@RequestParam @ValidPath String from, @RequestParam @ValidPath String to) {
         return ResponseEntity.ok(storageService.moveOrRenameResource(from, to));
     }
 
@@ -95,7 +95,7 @@ public class ResourceController {
             }
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
-    public ResponseEntity<List<OldResourceDto>> uploadResources(
+    public ResponseEntity<List<ResourceDto>> uploadResources(
             @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path,
             @RequestPart("object") List<MultipartFile> files) {
         return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(path, files));

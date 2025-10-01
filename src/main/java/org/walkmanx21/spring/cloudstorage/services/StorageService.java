@@ -113,7 +113,7 @@ public class StorageService {
         deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName().substring(getUserRootDirectory().length())));
     }
 
-    public List<OldResourceDto> uploadResources(String path, List<MultipartFile> files) {
+    public List<ResourceDto> uploadResources(String path, List<MultipartFile> files) {
         String fullObject = getFullObject(path);
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
@@ -130,7 +130,6 @@ public class StorageService {
 
         minioService.uploadResources(ROOT_BUCKET, fullObject, filesMap);
         List<ResourceDto> resourceDtos = new ArrayList<>();
-        List<OldResourceDto> resources = new ArrayList<>();
         filesMap.forEach((key, file) -> {
             String object = path + file.getOriginalFilename();
             Resource resource = resourceBuilder.buildFile(getCurrentUser(), object, file.getSize());
@@ -138,7 +137,7 @@ public class StorageService {
             searchService.saveUserResourceToDatabase(resource);
         });
 
-        return resources;
+        return resourceDtos;
     }
 
     public StreamingResponseBody downloadResource(String requestObject) {
@@ -160,7 +159,7 @@ public class StorageService {
         };
     }
 
-    public OldResourceDto moveOrRenameResource(String from, String to) {
+    public ResourceDto moveOrRenameResource(String from, String to) {
         if (from.startsWith("/"))
             from = from.substring(1);
 
@@ -190,21 +189,26 @@ public class StorageService {
             throw new ResourceAlreadyExistException();
         }
 
-        List<Item> items = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
+        List<Item> itemsToChange = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
 
-        items.forEach(item -> {
+        itemsToChange.forEach(item -> {
             String newKey = item.objectName().replace(oldObject, newObject);
             minioService.copyObject(ROOT_BUCKET, item.objectName(), newKey);
-//            searchService.saveUserResourceToDatabase(newKey);
         });
 
-        items.forEach(item -> {
+        List<Item> changedItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
+        changedItems.forEach(changedItem -> {
+            Resource resource = resourceBuilder.build(getCurrentUser(), changedItem);
+            searchService.saveUserResourceToDatabase(resource);
+        });
+
+        itemsToChange.forEach(item -> {
             List<Item> oldItems = minioService.removeObject(ROOT_BUCKET, item.objectName());
-            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName()));
+            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName().substring(getCurrentUser().getUserRootDirectory().length())));
         });
 
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
-        return oldResourceDtoBuilder.build(to, item);
+        return resourceMapper.convertToResourceDto(resourceBuilder.build(getCurrentUser(), item));
     }
 
     public List<OldResourceDto> searchResources(String query) {
