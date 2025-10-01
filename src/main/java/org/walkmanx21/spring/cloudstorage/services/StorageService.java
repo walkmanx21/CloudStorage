@@ -80,17 +80,16 @@ public class StorageService {
         return resourceMapper.convertToDirectoryDto(resource);
     }
 
-    public OldResourceDto getResourceData(String path) {
+    public ResourceDto getResourceData(String path) {
         String fullObject = getFullObject(path);
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
-        Item item;
         if (!items.isEmpty()) {
-            item = items.get(0);
+            Resource resource = resourceBuilder.build(getCurrentUser(), items.get(0));
+            return resourceMapper.convertToResourceDto(resource);
         } else {
             log.warn("Ресурс {}, по которому запрашиваются данные, не найден", fullObject);
             throw new ResourceNotFoundException();
         }
-        return oldResourceDtoBuilder.build(path, item);
     }
 
     public List<ResourceDto> getDirectoryContents(String path) {

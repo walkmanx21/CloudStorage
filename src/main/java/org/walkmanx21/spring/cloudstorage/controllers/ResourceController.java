@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.OldResourceDto;
+import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
 
@@ -37,7 +38,7 @@ public class ResourceController {
             }
     )
     @GetMapping
-    public ResponseEntity<OldResourceDto> showResourceData(@RequestParam @ValidPath String path) {
+    public ResponseEntity<ResourceDto> showResourceData(@RequestParam @ValidPath String path) {
         return ResponseEntity.ok(storageService.getResourceData(path));
     }
 
