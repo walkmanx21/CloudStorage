@@ -4,10 +4,12 @@ spring:
 
   datasource:
     driver-class-name: org.postgresql.Driver
-    url: jdbc:postgresql://localhost:5433/cloud_storage_db
-#    url: jdbc:postgresql://postgres:5433/cloud_storage_db
+    url: jdbc:postgresql://localhost:5432/cloud_storage_db
     username: ${POSTGRES_USER}
     password: ${POSTGRES_PASSWORD}
+
+  liquibase:
+    enabled: true
 
   jpa:
     properties:
@@ -23,7 +25,6 @@ spring:
   data:
     redis:
       host: localhost
-#      host: redis
       port: 6379
       password: ${REDIS_PASSWORD}
 
@@ -36,7 +37,6 @@ spring:
 
 minio:
   url: http://localhost:9000
-#  url: http://minio:9000
   access-key: ${MINIO_ROOT_USER}
   secret-key: ${MINIO_ROOT_PASSWORD}
 
