@@ -6,7 +6,7 @@ plugins {
 apply from: 'version.gradle'
 
 group = 'org.walkmanx21.spring'
-version = '0.0.1-SNAPSHOT'
+version = '1.0'
 description = 'CloudStorage'
 
 java {
