@@ -1,0 +1,79 @@
+package org.walkmanx21.spring.cloudstorage.services;
+
+import io.minio.messages.Item;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
+import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
+import org.walkmanx21.spring.cloudstorage.util.PathUtil;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.List;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
+
+@Service
+@Slf4j
+@RequiredArgsConstructor
+public class DownloadService {
+
+    private final UserContextService userContextService;
+    private final MinioService minioService;
+    private final PathUtil pathUtil;
+
+    private static final String ROOT_BUCKET = "user-files";
+
+    public StreamingResponseBody downloadResource(String requestObject) {
+        String userDirectory = userContextService.getUserRootDirectory();
+        String fullObject = pathUtil.getFullObject(requestObject);
+
+        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
+        if (!resourceExist) {
+            log.warn("Ресурс {} для скачивания не найден", fullObject);
+            throw new ResourceNotFoundException();
+        }
+
+        return outputStream -> {
+            if (fullObject.endsWith("/")) {
+                downloadDirectory(outputStream, fullObject, userDirectory);
+            } else {
+                downloadFile(outputStream, fullObject);
+            }
+        };
+    }
+
+    private void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
+        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
+            List<Item> directoryContents = minioService.getListObjects(ROOT_BUCKET, fullPath, true);
+            directoryContents.forEach(object -> {
+                if (!object.isDir()) {
+                    String entryName = object.objectName().substring(userDirectory.length());
+                    try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, object.objectName())) {
+                        zipOutputStream.putNextEntry(new ZipEntry(entryName));
+                        inputStream.transferTo(zipOutputStream);
+                        zipOutputStream.closeEntry();
+                    } catch (IOException e) {
+                        log.warn("Ошибка скачивания файла {}", object.objectName());
+                        throw new DownloadException();
+                    }
+                }
+            });
+        } catch (IOException e) {
+            log.warn("Ошибка скачивания папки {}", fullPath);
+            throw new DownloadException();
+        }
+    }
+
+    private void downloadFile(OutputStream outputStream, String fullPath) {
+        try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
+            inputStream.transferTo(outputStream);
+        } catch (IOException e) {
+            log.warn("Ошибка скачивания файла {}", fullPath);
+            throw new DownloadException();
+        }
+    }
+}

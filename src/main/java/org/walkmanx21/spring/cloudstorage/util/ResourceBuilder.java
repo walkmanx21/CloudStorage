@@ -1,37 +1,41 @@
 package org.walkmanx21.spring.cloudstorage.util;
 
 import io.minio.messages.Item;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.models.ResourceType;
-import org.walkmanx21.spring.cloudstorage.models.User;
+import org.walkmanx21.spring.cloudstorage.services.UserContextService;
 
 import java.time.LocalDateTime;
 
 @Component
+@RequiredArgsConstructor
 public class ResourceBuilder {
 
-    public Resource build (User user, Item item) {
-        String userRootDirectory = user.getUserRootDirectory();
+    private final UserContextService userContextService;
+
+    public Resource build (Item item) {
+        String userRootDirectory = userContextService.getUserRootDirectory();
         if (item.objectName().endsWith("/")) {
-            return buildDirectory(user, item.objectName().substring(userRootDirectory.length()));
+            return buildDirectory(item.objectName().substring(userRootDirectory.length()));
         } else {
-            return buildFile(user, item.objectName().substring(userRootDirectory.length()), item.size());
+            return buildFile(item.objectName().substring(userRootDirectory.length()), item.size());
         }
     }
 
-    public Resource buildDirectory(User user, String object) {
+    public Resource buildDirectory(String object) {
         return Resource.builder()
-                .user(user)
+                .user(userContextService.getCurrentUser())
                 .object(object)
                 .type(ResourceType.DIRECTORY)
                 .createdAt(LocalDateTime.now())
                 .build();
     }
 
-    public Resource buildFile(User user, String object, long size) {
+    public Resource buildFile(String object, long size) {
         return Resource.builder()
-                .user(user)
+                .user(userContextService.getCurrentUser())
                 .object(object)
                 .type(ResourceType.FILE)
                 .size(size)

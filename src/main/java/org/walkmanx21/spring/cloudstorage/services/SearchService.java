@@ -56,7 +56,7 @@ public class SearchService {
                         while (parent.toString().contains(query)) {
                             String objectName = parent.getFileName().toString();
                             if (objectName.contains(query)) {
-                                Resource directory = resourceBuilder.buildDirectory(getCurrentUser(), parent.toString().replace("\\", "/"));
+                                Resource directory = resourceBuilder.buildDirectory(parent.toString().replace("\\", "/"));
                                 resourceDtos.add(resourceMapper.convertToDirectoryDto(directory));
                             }
                             parent = parent.getParent();

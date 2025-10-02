@@ -4,8 +4,6 @@ import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
@@ -16,16 +14,13 @@ import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistExcepti
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
-import org.walkmanx21.spring.cloudstorage.models.User;
-import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
+import org.walkmanx21.spring.cloudstorage.util.PathUtil;
 import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
@@ -39,6 +34,8 @@ public class StorageService {
     private final SearchService searchService;
     private final ResourceMapper resourceMapper;
     private final ResourceBuilder resourceBuilder;
+    private final UserContextService userContextService;
+    private final PathUtil pathUtil;
 
     private static final String ROOT_BUCKET = "user-files";
 
@@ -56,8 +53,8 @@ public class StorageService {
     }
 
     public DirectoryDto createDirectory(String path) {
-        String fullObject = getFullObject(path);
-        String parent = getParent(path);
+        String fullObject = pathUtil.getFullObject(path);
+        String parent = pathUtil.getParent(path);
 
         boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
         boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
@@ -73,16 +70,16 @@ public class StorageService {
         }
 
         minioService.createDirectory(ROOT_BUCKET, fullObject);
-        Resource resource = resourceBuilder.buildDirectory(getCurrentUser(), path);
+        Resource resource = resourceBuilder.buildDirectory(path);
         searchService.saveUserResourceToDatabase(resource);
         return resourceMapper.convertToDirectoryDto(resource);
     }
 
     public ResourceDto getResourceData(String path) {
-        String fullObject = getFullObject(path);
+        String fullObject = pathUtil.getFullObject(path);
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         if (!items.isEmpty()) {
-            Resource resource = resourceBuilder.build(getCurrentUser(), items.get(0));
+            Resource resource = resourceBuilder.build(items.get(0));
             return resourceMapper.convertToResourceDto(resource);
         } else {
             log.warn("Ресурс {}, по которому запрашиваются данные, не найден", fullObject);
@@ -91,12 +88,12 @@ public class StorageService {
     }
 
     public List<ResourceDto> getDirectoryContents(String path) {
-        String fullObject = getFullObject(path);
+        String fullObject = pathUtil.getFullObject(path);
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         List<ResourceDto> resourceDtos = new ArrayList<>();
         for (Item item : items) {
             if (!item.objectName().equals(fullObject)) {
-                Resource resource = resourceBuilder.build(getCurrentUser(), item);
+                Resource resource = resourceBuilder.build(item);
                 resourceDtos.add(resourceMapper.convertToResourceDto(resource));
             }
         }
@@ -106,55 +103,9 @@ public class StorageService {
     public void removeResource(String path) {
         if (path.startsWith("/"))
             path = path.substring(1);
-        String fullObject = getFullObject(path);
+        String fullObject = pathUtil.getFullObject(path);
         List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, fullObject);
-        deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName().substring(getUserRootDirectory().length())));
-    }
-
-    public List<ResourceDto> uploadResources(String path, List<MultipartFile> files) {
-        String fullObject = getFullObject(path);
-
-        Map<String, MultipartFile> filesMap = new HashMap<>();
-        for (MultipartFile file : files) {
-            boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject + file.getOriginalFilename());
-
-            if (!fileExist) {
-                filesMap.put(file.getOriginalFilename(), file);
-            } else {
-                log.warn("Загружаемый ресурс {} уже существует", file.getOriginalFilename());
-                throw new ResourceAlreadyExistException();
-            }
-        }
-
-        minioService.uploadResources(ROOT_BUCKET, fullObject, filesMap);
-        List<ResourceDto> resourceDtos = new ArrayList<>();
-        filesMap.forEach((key, file) -> {
-            String object = path + file.getOriginalFilename();
-            Resource resource = resourceBuilder.buildFile(getCurrentUser(), object, file.getSize());
-            resourceDtos.add(resourceMapper.convertToFileDto(resource));
-            searchService.saveUserResourceToDatabase(resource);
-        });
-
-        return resourceDtos;
-    }
-
-    public StreamingResponseBody downloadResource(String requestObject) {
-        String userDirectory = getUserRootDirectory();
-        String fullObject = getFullObject(requestObject);
-
-        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
-        if (!resourceExist) {
-            log.warn("Ресурс {} для скачивания не найден", fullObject);
-            throw new ResourceNotFoundException();
-        }
-
-        return outputStream -> {
-            if (fullObject.endsWith("/")) {
-                downloadDirectory(outputStream, fullObject, userDirectory);
-            } else {
-                downloadFile(outputStream, fullObject);
-            }
-        };
+        deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName().substring(userContextService.getUserRootDirectory().length())));
     }
 
     public ResourceDto moveOrRenameResource(String from, String to) {
@@ -164,9 +115,9 @@ public class StorageService {
         if (to.startsWith("/"))
             to = to.substring(1);
 
-        String oldObject = getFullObject(from);
-        String newObject = getFullObject(to);
-        String parentOfNewObject = getParent(newObject);
+        String oldObject = pathUtil.getFullObject(from);
+        String newObject = pathUtil.getFullObject(to);
+        String parentOfNewObject = pathUtil.getParent(newObject);
 
         boolean oldObjectExist = minioService.checkResourceExist(ROOT_BUCKET, oldObject);
         boolean parentOfNewObjectExist = minioService.checkResourceExist(ROOT_BUCKET, parentOfNewObject);
@@ -196,76 +147,17 @@ public class StorageService {
 
         List<Item> changedItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
         changedItems.forEach(changedItem -> {
-            Resource resource = resourceBuilder.build(getCurrentUser(), changedItem);
+            Resource resource = resourceBuilder.build(changedItem);
             searchService.saveUserResourceToDatabase(resource);
         });
 
         itemsToChange.forEach(item -> {
             List<Item> oldItems = minioService.removeObject(ROOT_BUCKET, item.objectName());
-            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName().substring(getUserRootDirectory().length())));
+            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName().substring(userContextService.getUserRootDirectory().length())));
         });
 
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
-        return resourceMapper.convertToResourceDto(resourceBuilder.build(getCurrentUser(), item));
+        return resourceMapper.convertToResourceDto(resourceBuilder.build(item));
     }
-
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        return userDetails.getUser();
-    }
-
-    private String getUserRootDirectory() {
-        return getCurrentUser().getUserRootDirectory();
-    }
-
-    private String getFullObject(String requestObject) {
-        if (requestObject.startsWith(getUserRootDirectory()))
-            return requestObject;
-        else
-            return (getUserRootDirectory() + requestObject).replace("//", "/");
-    }
-
-    private String getParent(String path) {
-        Path object = Paths.get(path);
-        Path parent = object.getParent();
-        if (path.startsWith(getUserRootDirectory()))
-            return parent.toString().replace("\\", "/") + "/";
-        else
-            return parent == null ? getUserRootDirectory() : getUserRootDirectory() + parent.toString().replace("\\", "/") + "/";
-    }
-
-    private void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
-        try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
-            List<Item> directoryContents = minioService.getListObjects(ROOT_BUCKET, fullPath, true);
-            directoryContents.forEach(object -> {
-                if (!object.isDir()) {
-                    String entryName = object.objectName().substring(userDirectory.length());
-                    try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, object.objectName())) {
-                        zipOutputStream.putNextEntry(new ZipEntry(entryName));
-                        inputStream.transferTo(zipOutputStream);
-                        zipOutputStream.closeEntry();
-                    } catch (IOException e) {
-                        log.warn("Ошибка скачивания файла {}", object.objectName());
-                        throw new DownloadException();
-                    }
-                }
-            });
-        } catch (IOException e) {
-            log.warn("Ошибка скачивания папки {}", fullPath);
-            throw new DownloadException();
-        }
-    }
-
-    private void downloadFile(OutputStream outputStream, String fullPath) {
-        try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
-            inputStream.transferTo(outputStream);
-        } catch (IOException e) {
-            log.warn("Ошибка скачивания файла {}", fullPath);
-            throw new DownloadException();
-        }
-    }
-
-
 
 }
