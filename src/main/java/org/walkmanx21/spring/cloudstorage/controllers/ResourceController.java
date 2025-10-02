@@ -19,6 +19,7 @@ import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Set;
 
 @RestController
 @RequiredArgsConstructor
@@ -84,7 +85,7 @@ public class ResourceController {
             }
     )
     @GetMapping("/search")
-    public ResponseEntity<List<ResourceDto>> searchResources(@RequestParam @NotBlank String query) {
+    public ResponseEntity<Set<ResourceDto>> searchResources(@RequestParam @NotBlank String query) {
         return ResponseEntity.ok(searchService.searchResources(query));
     }
 

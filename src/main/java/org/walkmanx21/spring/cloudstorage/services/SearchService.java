@@ -5,10 +5,12 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
+import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.repositories.ResourceRepository;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
+import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
 import javax.swing.*;
@@ -25,6 +27,7 @@ public class SearchService {
 
     private final ResourceRepository resourceRepository;
     private final ResourceMapper resourceMapper;
+    private final ResourceBuilder resourceBuilder;
 
     public void saveUserResourceToDatabase(Resource resource) {
         resourceRepository.save(resource);
@@ -35,25 +38,36 @@ public class SearchService {
         userResource.ifPresent(resourceRepository::delete);
     }
 
-    public List<ResourceDto> searchResources(String query) {
+    public Set<ResourceDto> searchResources(String query) {
         var foundResources = resourceRepository.findResourceByObjectContains(query);
         Set<ResourceDto> resourceDtos = new HashSet<>();
-//        foundResources.ifPresentOrElse(resources -> {
-//            resources.forEach(resource -> {
-//                Path path = Paths.get(resource.getObject());
-//                if (path.getFileName().toString().contains(query)) {
-//                    resourceDtos.add(resourceMapper.convertToResourceDto(resource));
-//                }
-//
-//                if (path.getParent().toString().contains(query)) {
-//
-//                }
-//
-//            });
-//        });
+        foundResources.ifPresentOrElse(resources -> {
+                    resources.forEach(resource -> {
+                        Path path = Paths.get(resource.getObject());
+                        Path parent = path.getParent();
 
-        System.out.println();
-        return null;
+                        if (path.getFileName().toString().contains(query)) {
+                            resourceDtos.add(resourceMapper.convertToResourceDto(resource));
+                        }
+
+                        if (parent == null)
+                            return;
+
+                        while (parent.toString().contains(query)) {
+                            String objectName = parent.getFileName().toString();
+                            if (objectName.contains(query)) {
+                                Resource directory = resourceBuilder.buildDirectory(getCurrentUser(), parent.toString().replace("\\", "/"));
+                                resourceDtos.add(resourceMapper.convertToDirectoryDto(directory));
+                            }
+                            parent = parent.getParent();
+                            if (parent == null)
+                                return;
+                            System.out.println();
+                        }
+                    });
+                },
+                ResourceNotFoundException::new);
+        return resourceDtos;
     }
 
     private User getCurrentUser() {
