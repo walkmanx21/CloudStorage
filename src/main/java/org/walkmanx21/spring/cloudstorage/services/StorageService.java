@@ -35,6 +35,7 @@ public class StorageService {
     private final ResourceMapper resourceMapper;
     private final ResourceBuilder resourceBuilder;
     private final UserContextService userContextService;
+    private final DownloadService downloadService;
     private final PathUtil pathUtil;
 
     private static final String ROOT_BUCKET = "user-files";
@@ -158,6 +159,52 @@ public class StorageService {
 
         Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
         return resourceMapper.convertToResourceDto(resourceBuilder.build(item));
+    }
+
+    public StreamingResponseBody downloadResource(String requestObject) {
+        String userDirectory = userContextService.getUserRootDirectory();
+        String fullObject = pathUtil.getFullObject(requestObject);
+
+        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
+        if (!resourceExist) {
+            log.warn("Ресурс {} для скачивания не найден", fullObject);
+            throw new ResourceNotFoundException();
+        }
+
+        return outputStream -> {
+            if (fullObject.endsWith("/")) {
+                downloadService.downloadDirectory(outputStream, fullObject, userDirectory);
+            } else {
+                downloadService.downloadFile(outputStream, fullObject);
+            }
+        };
+    }
+
+    public List<ResourceDto> uploadResources(String path, List<MultipartFile> files) {
+        String fullObject = pathUtil.getFullObject(path);
+
+        Map<String, MultipartFile> filesMap = new HashMap<>();
+        for (MultipartFile file : files) {
+            boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject + file.getOriginalFilename());
+
+            if (!fileExist) {
+                filesMap.put(file.getOriginalFilename(), file);
+            } else {
+                log.warn("Загружаемый ресурс {} уже существует", file.getOriginalFilename());
+                throw new ResourceAlreadyExistException();
+            }
+        }
+
+        minioService.uploadResources(ROOT_BUCKET, fullObject, filesMap);
+        List<ResourceDto> resourceDtos = new ArrayList<>();
+        filesMap.forEach((key, file) -> {
+            String object = path + file.getOriginalFilename();
+            Resource resource = resourceBuilder.buildFile(object, file.getSize());
+            resourceDtos.add(resourceMapper.convertToFileDto(resource));
+            searchService.saveUserResourceToDatabase(resource);
+        });
+
+        return resourceDtos;
     }
 
 }

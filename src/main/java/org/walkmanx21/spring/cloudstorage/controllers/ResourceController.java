@@ -15,7 +15,6 @@ import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.services.DownloadService;
 import org.walkmanx21.spring.cloudstorage.services.SearchService;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
-import org.walkmanx21.spring.cloudstorage.services.UploadService;
 import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
 
 import java.nio.charset.StandardCharsets;
@@ -32,8 +31,6 @@ public class ResourceController {
 
     private final StorageService storageService;
     private final SearchService searchService;
-    private final DownloadService downloadService;
-    private final UploadService uploadService;
 
     @Operation(
             summary = "Получить информацию о ресурсе",
@@ -66,7 +63,7 @@ public class ResourceController {
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
-                .body(downloadService.downloadResource(path));
+                .body(storageService.downloadResource(path));
     }
 
     @Operation(
@@ -104,7 +101,7 @@ public class ResourceController {
     public ResponseEntity<List<ResourceDto>> uploadResources(
             @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path,
             @RequestPart("object") List<MultipartFile> files) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(uploadService.uploadResources(path, files));
+        return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(path, files));
     }
 
     @Operation(

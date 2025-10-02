@@ -21,32 +21,11 @@ import java.util.zip.ZipOutputStream;
 @RequiredArgsConstructor
 public class DownloadService {
 
-    private final UserContextService userContextService;
     private final MinioService minioService;
-    private final PathUtil pathUtil;
 
     private static final String ROOT_BUCKET = "user-files";
 
-    public StreamingResponseBody downloadResource(String requestObject) {
-        String userDirectory = userContextService.getUserRootDirectory();
-        String fullObject = pathUtil.getFullObject(requestObject);
-
-        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
-        if (!resourceExist) {
-            log.warn("Ресурс {} для скачивания не найден", fullObject);
-            throw new ResourceNotFoundException();
-        }
-
-        return outputStream -> {
-            if (fullObject.endsWith("/")) {
-                downloadDirectory(outputStream, fullObject, userDirectory);
-            } else {
-                downloadFile(outputStream, fullObject);
-            }
-        };
-    }
-
-    private void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
+    protected void downloadDirectory(OutputStream outputStream, String fullPath, String userDirectory) {
         try (ZipOutputStream zipOutputStream = new ZipOutputStream(outputStream)) {
             List<Item> directoryContents = minioService.getListObjects(ROOT_BUCKET, fullPath, true);
             directoryContents.forEach(object -> {
@@ -68,7 +47,7 @@ public class DownloadService {
         }
     }
 
-    private void downloadFile(OutputStream outputStream, String fullPath) {
+    protected void downloadFile(OutputStream outputStream, String fullPath) {
         try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
             inputStream.transferTo(outputStream);
         } catch (IOException e) {

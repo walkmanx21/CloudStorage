@@ -37,7 +37,7 @@ public class ExceptionHandlerFilter {
     }
 
     @ExceptionHandler({
-//            ErrorResponseException.class,
+            ErrorResponseException.class,
             ResourceNotFoundException.class})
     @ResponseStatus(HttpStatus.NOT_FOUND)
     public ErrorResponseDto handleErrorResponse() {

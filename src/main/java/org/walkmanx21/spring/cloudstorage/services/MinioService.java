@@ -23,7 +23,7 @@ public class MinioService {
 
     private final MinioClient minioClient;
 
-    public boolean checkBucketExist(String bucket) {
+    protected boolean checkBucketExist(String bucket) {
         boolean exist;
         try {
             exist = minioClient.bucketExists(BucketExistsArgs.builder()
@@ -35,7 +35,7 @@ public class MinioService {
         return exist;
     }
 
-    public void createBucket(String bucket) {
+    protected void createBucket(String bucket) {
         try {
             minioClient.makeBucket(MakeBucketArgs
                     .builder().bucket(bucket)
@@ -45,7 +45,7 @@ public class MinioService {
         }
     }
 
-    public void createDirectory(String bucket, String path) {
+    protected void createDirectory(String bucket, String path) {
         try {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(bucket)
@@ -58,7 +58,7 @@ public class MinioService {
         }
     }
 
-    public boolean checkResourceExist(String bucket, String prefix) {
+    protected boolean checkResourceExist(String bucket, String prefix) {
         return minioClient.listObjects(ListObjectsArgs.builder()
                         .bucket(bucket)
                         .prefix(prefix)
@@ -67,7 +67,7 @@ public class MinioService {
                 .iterator().hasNext();
     }
 
-    public List<Item> getListObjects(String bucket, String prefix, boolean recursive) {
+    protected List<Item> getListObjects(String bucket, String prefix, boolean recursive) {
         Iterable<Result<Item>> results = minioClient.listObjects(ListObjectsArgs.builder()
                 .bucket(bucket)
                 .prefix(prefix)
@@ -85,7 +85,7 @@ public class MinioService {
         return items;
     }
 
-    public List <Item> removeObject(String bucket, String object) {
+    protected List <Item> removeObject(String bucket, String object) {
         List<Item> items = getListObjects(bucket, object, true);
         if (items.isEmpty())
             throw new ResourceNotFoundException();
@@ -102,7 +102,7 @@ public class MinioService {
         return items;
     }
 
-    public void uploadResources(String bucket, String destinationDirectory, Map<String, MultipartFile> files) {
+    protected void uploadResources(String bucket, String destinationDirectory, Map<String, MultipartFile> files) {
         files.forEach((key, file) -> {
             try (InputStream inputStream = file.getInputStream()) {
                 String fullFileName = destinationDirectory + file.getOriginalFilename();
@@ -118,7 +118,7 @@ public class MinioService {
         });
     }
 
-    public InputStream getObject(String bucket, String object) {
+    protected InputStream getObject(String bucket, String object) {
         try {
             return minioClient.getObject(GetObjectArgs.builder()
                     .bucket(bucket)
@@ -129,7 +129,7 @@ public class MinioService {
         }
     }
 
-    public void copyObject(String bucket, String oldObject, String newObject) {
+    protected void copyObject(String bucket, String oldObject, String newObject) {
         try {
             minioClient.copyObject(CopyObjectArgs.builder()
                     .bucket(bucket)
