@@ -10,14 +10,11 @@ import org.walkmanx21.spring.cloudstorage.models.User;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.repositories.ResourceRepository;
 import org.walkmanx21.spring.cloudstorage.security.MyUserDetails;
-import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
-import javax.swing.*;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 

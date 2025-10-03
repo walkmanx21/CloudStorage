@@ -27,6 +27,8 @@ services:
     restart: always
     volumes:
       - redis-data:/data
+    ports:
+      - '6379:6379'
   minio:
     container_name: minio_container
     image: minio/minio
@@ -38,6 +40,9 @@ services:
       - minio-storage:/data
       - minio-config:/root/.minio
     command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
 
 volumes:
   pg_data:

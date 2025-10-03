@@ -1,11 +1,10 @@
-package org.walkmanx21.spring.cloudstorage.util;
+package org.walkmanx21.spring.cloudstorage.services;
 
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.models.ResourceType;
-import org.walkmanx21.spring.cloudstorage.services.UserContextService;
 
 import java.time.LocalDateTime;
 

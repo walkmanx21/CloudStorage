@@ -4,10 +4,7 @@ import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
-import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
-import org.walkmanx21.spring.cloudstorage.util.PathUtil;
 
 import java.io.IOException;
 import java.io.InputStream;

@@ -9,21 +9,13 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
-import org.walkmanx21.spring.cloudstorage.exceptions.DownloadException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
-import org.walkmanx21.spring.cloudstorage.util.PathUtil;
-import org.walkmanx21.spring.cloudstorage.util.ResourceBuilder;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.util.*;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
 @Service
 @RequiredArgsConstructor
@@ -36,7 +28,7 @@ public class StorageService {
     private final ResourceBuilder resourceBuilder;
     private final UserContextService userContextService;
     private final DownloadService downloadService;
-    private final PathUtil pathUtil;
+    private final PathService pathService;
 
     private static final String ROOT_BUCKET = "user-files";
 
@@ -54,8 +46,8 @@ public class StorageService {
     }
 
     public DirectoryDto createDirectory(String path) {
-        String fullObject = pathUtil.getFullObject(path);
-        String parent = pathUtil.getParent(path);
+        String fullObject = pathService.getFullObject(path);
+        String parent = pathService.getParent(path);
 
         boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
         boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
@@ -77,7 +69,7 @@ public class StorageService {
     }
 
     public ResourceDto getResourceData(String path) {
-        String fullObject = pathUtil.getFullObject(path);
+        String fullObject = pathService.getFullObject(path);
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         if (!items.isEmpty()) {
             Resource resource = resourceBuilder.build(items.get(0));
@@ -89,7 +81,7 @@ public class StorageService {
     }
 
     public List<ResourceDto> getDirectoryContents(String path) {
-        String fullObject = pathUtil.getFullObject(path);
+        String fullObject = pathService.getFullObject(path);
         List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
         List<ResourceDto> resourceDtos = new ArrayList<>();
         for (Item item : items) {
@@ -104,7 +96,7 @@ public class StorageService {
     public void removeResource(String path) {
         if (path.startsWith("/"))
             path = path.substring(1);
-        String fullObject = pathUtil.getFullObject(path);
+        String fullObject = pathService.getFullObject(path);
         List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, fullObject);
         deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName().substring(userContextService.getUserRootDirectory().length())));
     }
@@ -116,9 +108,9 @@ public class StorageService {
         if (to.startsWith("/"))
             to = to.substring(1);
 
-        String oldObject = pathUtil.getFullObject(from);
-        String newObject = pathUtil.getFullObject(to);
-        String parentOfNewObject = pathUtil.getParent(newObject);
+        String oldObject = pathService.getFullObject(from);
+        String newObject = pathService.getFullObject(to);
+        String parentOfNewObject = pathService.getParent(newObject);
 
         boolean oldObjectExist = minioService.checkResourceExist(ROOT_BUCKET, oldObject);
         boolean parentOfNewObjectExist = minioService.checkResourceExist(ROOT_BUCKET, parentOfNewObject);
@@ -146,24 +138,21 @@ public class StorageService {
             minioService.copyObject(ROOT_BUCKET, item.objectName(), newKey);
         });
 
-        List<Item> changedItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
-        changedItems.forEach(changedItem -> {
-            Resource resource = resourceBuilder.build(changedItem);
+        List<Item> newItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
+        newItems.forEach(newItem -> {
+            Resource resource = resourceBuilder.build(newItem);
             searchService.saveUserResourceToDatabase(resource);
         });
 
-        itemsToChange.forEach(item -> {
-            List<Item> oldItems = minioService.removeObject(ROOT_BUCKET, item.objectName());
-            oldItems.forEach(oldItem -> searchService.removeUserResourceFromDatabase(oldItem.objectName().substring(userContextService.getUserRootDirectory().length())));
-        });
+        List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, oldObject);
+        deletedItems.forEach(deletedItem -> searchService.removeUserResourceFromDatabase(deletedItem.objectName().substring(userContextService.getUserRootDirectory().length())));
 
-        Item item = minioService.getListObjects(ROOT_BUCKET, newObject, false).get(0);
-        return resourceMapper.convertToResourceDto(resourceBuilder.build(item));
+        return resourceMapper.convertToResourceDto(resourceBuilder.build(newItems.get(0)));
     }
 
     public StreamingResponseBody downloadResource(String requestObject) {
         String userDirectory = userContextService.getUserRootDirectory();
-        String fullObject = pathUtil.getFullObject(requestObject);
+        String fullObject = pathService.getFullObject(requestObject);
 
         boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
         if (!resourceExist) {
@@ -181,7 +170,7 @@ public class StorageService {
     }
 
     public List<ResourceDto> uploadResources(String path, List<MultipartFile> files) {
-        String fullObject = pathUtil.getFullObject(path);
+        String fullObject = pathService.getFullObject(path);
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
         for (MultipartFile file : files) {

@@ -1,24 +1,23 @@
-package org.walkmanx21.spring.cloudstorage.util;
+package org.walkmanx21.spring.cloudstorage.services;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
-import org.walkmanx21.spring.cloudstorage.services.UserContextService;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 @Component
 @RequiredArgsConstructor
-public class PathUtil {
+public class PathService {
 
     private final UserContextService userContextService;
 
     public String getFullObject(String requestObject) {
         String userRootDirectory = userContextService.getUserRootDirectory();
-        if (requestObject.startsWith(userRootDirectory))
-            return requestObject;
-        else
+        if (requestObject.isEmpty() || !requestObject.startsWith(userRootDirectory))
             return (userRootDirectory + requestObject).replace("//", "/");
+        else
+            return requestObject;
     }
 
     public String getParent(String path) {
