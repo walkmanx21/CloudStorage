@@ -11,6 +11,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.walkmanx21.spring.cloudstorage.dto.UserRequestDto;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 
 import java.io.IOException;
 
@@ -35,7 +36,7 @@ public class JsonUsernamePasswordFilter extends UsernamePasswordAuthenticationFi
             if (!violations.isEmpty()) {
                 StringBuilder builder = new StringBuilder();
                 violations.forEach(v -> builder.append(v.getMessage()).append("; "));
-                unsuccessfulAuthentication(request, response, new BadCredentialsException(builder.toString()));
+                unsuccessfulAuthentication(request, response, new InvalidRequestDataException(builder.toString()));
                 return null;
             }
 

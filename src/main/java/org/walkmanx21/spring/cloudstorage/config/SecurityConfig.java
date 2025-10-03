@@ -23,6 +23,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.walkmanx21.spring.cloudstorage.exceptions.InvalidRequestDataException;
 import org.walkmanx21.spring.cloudstorage.util.JsonUsernamePasswordFilter;
 import org.walkmanx21.spring.cloudstorage.validation.UserRequestDtoValidator;
 
@@ -106,8 +107,8 @@ public class SecurityConfig {
         });
         filter.setAuthenticationFailureHandler((request, response, exception) -> {
                     response.setContentType("application/json");
-                    String message = "{\"message\":\"Incorrect data (there is no such user, or the password is incorrect)\"}";
-                    if (exception instanceof BadCredentialsException) {
+                    String message = "{\"message\":\"Неверные данные (такого пользователя нет или пароль неправильный)\"}";
+                    if (exception instanceof InvalidRequestDataException) {
                         message = "{\"message\":\"" + exception.getMessage() + "\"}";
                         response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
                     } else {
