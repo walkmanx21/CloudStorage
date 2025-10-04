@@ -13,13 +13,11 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.DownloadResponseDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
-import org.walkmanx21.spring.cloudstorage.services.DownloadService;
 import org.walkmanx21.spring.cloudstorage.services.SearchService;
 import org.walkmanx21.spring.cloudstorage.services.StorageService;
 import org.walkmanx21.spring.cloudstorage.validation.ValidPath;
 
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Paths;
 import java.util.List;
 import java.util.Set;
 

@@ -106,9 +106,7 @@ public class StorageService {
         });
 
         List<Item> newItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
-        newItems.forEach(newItem -> {
-            searchService.saveUserResourceToDatabase(resourceBuilder.build(newItem));
-        });
+        newItems.forEach(newItem -> searchService.saveUserResourceToDatabase(resourceBuilder.build(newItem)));
 
         List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, oldObject);
         deletedItems.forEach(deletedItem -> searchService.removeUserResourceFromDatabase(deletedItem.objectName().substring(userContextService.getUserRootDirectory().length())));

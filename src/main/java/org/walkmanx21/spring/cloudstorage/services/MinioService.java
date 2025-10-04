@@ -144,14 +144,4 @@ public class MinioService {
         }
     }
 
-    protected StatObjectResponse getStat (String bucket, String fullObject) {
-        try {
-            return minioClient.statObject(StatObjectArgs.builder()
-                    .bucket(bucket)
-                    .object(fullObject)
-                    .build());
-        } catch (Exception e) {
-            throw new MinioServiceException(e.getMessage(), e);
-        }
-    }
 }

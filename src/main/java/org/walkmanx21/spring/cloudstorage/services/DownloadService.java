@@ -1,6 +1,5 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
-import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

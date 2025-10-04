@@ -39,31 +39,29 @@ public class SearchService {
     public Set<ResourceDto> searchResources(String query) {
         var foundResources = resourceRepository.findResourceByUserAndObjectContains(userContextService.getCurrentUser(), query);
         Set<ResourceDto> resourceDtos = new HashSet<>();
-        foundResources.ifPresentOrElse(resources -> {
-                    resources.forEach(resource -> {
-                        Path path = Paths.get(resource.getObject());
-                        Path parent = path.getParent();
+        foundResources.ifPresentOrElse(resources -> resources.forEach(resource -> {
+            Path path = Paths.get(resource.getObject());
+            Path parent = path.getParent();
 
-                        if (path.getFileName().toString().contains(query)) {
-                            resourceDtos.add(resourceMapper.convertToResourceDto(resource));
-                        }
+            if (path.getFileName().toString().contains(query)) {
+                resourceDtos.add(resourceMapper.convertToResourceDto(resource));
+            }
 
-                        if (parent == null)
-                            return;
+            if (parent == null)
+                return;
 
-                        while (parent.toString().contains(query)) {
-                            String objectName = parent.getFileName().toString();
-                            if (objectName.contains(query)) {
-                                Resource directory = resourceBuilder.buildDirectory(parent.toString().replace("\\", "/"));
-                                resourceDtos.add(resourceMapper.convertToDirectoryDto(directory));
-                            }
-                            parent = parent.getParent();
-                            if (parent == null)
-                                return;
-                            System.out.println();
-                        }
-                    });
-                },
+            while (parent.toString().contains(query)) {
+                String objectName = parent.getFileName().toString();
+                if (objectName.contains(query)) {
+                    Resource directory = resourceBuilder.buildDirectory(parent.toString().replace("\\", "/"));
+                    resourceDtos.add(resourceMapper.convertToDirectoryDto(directory));
+                }
+                parent = parent.getParent();
+                if (parent == null)
+                    return;
+                System.out.println();
+            }
+        }),
                 ResourceNotFoundException::new);
         return resourceDtos;
     }
