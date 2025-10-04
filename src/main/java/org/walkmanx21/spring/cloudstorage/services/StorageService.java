@@ -1,14 +1,11 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
-import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
 import org.walkmanx21.spring.cloudstorage.dto.DownloadResponseDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
@@ -18,7 +15,6 @@ import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
-import java.nio.file.Paths;
 import java.util.*;
 
 @Service
@@ -53,18 +49,7 @@ public class StorageService {
         String fullObject = pathService.getFullObject(path);
         String parent = pathService.getParent(path);
 
-        boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
-        boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
-
-        if (!parentDirectoryExist) {
-            log.warn("Родительской папки {} не существует", parent);
-            throw new ParentDirectoryNotExistException();
-        }
-
-        if (directoryToCreateExist) {
-            log.warn("Создаваемая папка {} уже существует", fullObject);
-            throw new ResourceAlreadyExistException();
-        }
+        validateCreateDirectory(parent, fullObject);
 
         minioService.createDirectory(ROOT_BUCKET, fullObject);
         Resource resource = resourceBuilder.buildDirectory(path);
@@ -106,34 +91,12 @@ public class StorageService {
     }
 
     public ResourceDto moveOrRenameResource(String from, String to) {
-        if (from.startsWith("/"))
-            from = from.substring(1);
 
-        if (to.startsWith("/"))
-            to = to.substring(1);
-
-        String oldObject = pathService.getFullObject(from);
-        String newObject = pathService.getFullObject(to);
+        String oldObject = pathService.getFullObject(pathService.preparePath(from));
+        String newObject = pathService.getFullObject(pathService.preparePath(to));
         String parentOfNewObject = pathService.getParent(newObject);
 
-        boolean oldObjectExist = minioService.checkResourceExist(ROOT_BUCKET, oldObject);
-        boolean parentOfNewObjectExist = minioService.checkResourceExist(ROOT_BUCKET, parentOfNewObject);
-
-        if (!oldObjectExist) {
-            log.warn("Старого объекта {} не существует", oldObject);
-            throw new ResourceNotFoundException();
-        }
-
-        if (!parentOfNewObjectExist) {
-            log.warn("Родительской папки нового объекта {} не существует", parentOfNewObject);
-            throw new ResourceNotFoundException();
-        }
-
-        boolean newFileAlreadyExist = minioService.checkResourceExist(ROOT_BUCKET, newObject);
-        if (newFileAlreadyExist) {
-            log.warn("Новый файл {} уже существует", newObject);
-            throw new ResourceAlreadyExistException();
-        }
+        validateMoveOrRename(oldObject, newObject, parentOfNewObject);
 
         List<Item> itemsToChange = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
 
@@ -144,8 +107,7 @@ public class StorageService {
 
         List<Item> newItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
         newItems.forEach(newItem -> {
-            Resource resource = resourceBuilder.build(newItem);
-            searchService.saveUserResourceToDatabase(resource);
+            searchService.saveUserResourceToDatabase(resourceBuilder.build(newItem));
         });
 
         List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, oldObject);
@@ -159,11 +121,7 @@ public class StorageService {
         String fullObject = pathService.getFullObject(requestObject);
         String fileName = pathService.getFileName(requestObject);
 
-        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
-        if (!resourceExist) {
-            log.warn("Ресурс {} для скачивания не найден", fullObject);
-            throw new ResourceNotFoundException();
-        }
+        validateDownload(fullObject);
 
         if (fullObject.endsWith("/")) {
             return new DownloadResponseDto(outputStream -> downloadService.downloadDirectory(outputStream, fullObject, userDirectory), fileName);
@@ -198,6 +156,51 @@ public class StorageService {
         });
 
         return resourceDtos;
+    }
+
+    private void validateCreateDirectory(String parent, String fullObject) {
+        boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
+        boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
+
+        if (!parentDirectoryExist) {
+            log.warn("Родительской папки {} не существует", parent);
+            throw new ParentDirectoryNotExistException();
+        }
+
+        if (directoryToCreateExist) {
+            log.warn("Создаваемая папка {} уже существует", fullObject);
+            throw new ResourceAlreadyExistException();
+        }
+    }
+
+    private void validateMoveOrRename(String oldObject, String newObject, String parentOfNewObject) {
+        boolean oldObjectExist = minioService.checkResourceExist(ROOT_BUCKET, oldObject);
+        boolean parentOfNewObjectExist = minioService.checkResourceExist(ROOT_BUCKET, parentOfNewObject);
+
+        if (!oldObjectExist) {
+            log.warn("Старого объекта {} не существует", oldObject);
+            throw new ResourceNotFoundException();
+        }
+
+        if (!parentOfNewObjectExist) {
+            log.warn("Родительской папки нового объекта {} не существует", parentOfNewObject);
+            throw new ResourceNotFoundException();
+        }
+
+        boolean newFileAlreadyExist = minioService.checkResourceExist(ROOT_BUCKET, newObject);
+
+        if (newFileAlreadyExist) {
+            log.warn("Новый файл {} уже существует", newObject);
+            throw new ResourceAlreadyExistException();
+        }
+    }
+
+    private void validateDownload(String fullObject) {
+        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
+        if (!resourceExist) {
+            log.warn("Ресурс {} для скачивания не найден", fullObject);
+            throw new ResourceNotFoundException();
+        }
     }
 
 }

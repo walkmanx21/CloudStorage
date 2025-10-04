@@ -9,7 +9,7 @@ import org.walkmanx21.spring.cloudstorage.models.User;
 @Component
 public class UserMapper {
 
-    private ModelMapper mapper = new ModelMapper();
+    private final ModelMapper mapper = new ModelMapper();
 
     public User convertToUser (UserRequestDto userRequestDto) {
         return mapper.map(userRequestDto, User.class);

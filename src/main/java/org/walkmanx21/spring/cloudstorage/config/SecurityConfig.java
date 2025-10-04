@@ -123,7 +123,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(List.of("http://localhost:8082", "http://host.docker.internal:8082")); //TODO указать потом реальный адрес приложения
+        config.setAllowedOrigins(List.of("http://localhost:8080", "http://host.docker.internal:8080")); //TODO указать потом реальный адрес приложения
         config.setAllowedMethods(List.of("*"));
         config.setAllowedHeaders(List.of("*"));
         config.setAllowCredentials(true);

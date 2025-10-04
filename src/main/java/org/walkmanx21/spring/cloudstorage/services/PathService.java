@@ -33,4 +33,11 @@ public class PathService {
     public String getFileName(String path) {
         return Paths.get(path).getFileName().toString();
     }
+
+    public String preparePath (String path) {
+        if (path.startsWith("/"))
+            return path.substring(1);
+        else
+            return path;
+    }
 }

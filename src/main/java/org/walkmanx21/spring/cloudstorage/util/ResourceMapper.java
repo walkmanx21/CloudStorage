@@ -21,7 +21,7 @@ public class ResourceMapper {
     private final ModelMapper mapper = new ModelMapper();
 
     @PostConstruct
-    public void prepare() {
+    public void init() {
         TypeMap<Resource, DirectoryDto> typeDirectoryMap = mapper.createTypeMap(Resource.class, DirectoryDto.class);
         TypeMap<Resource, FileDto> typeFileMap = mapper.createTypeMap(Resource.class, FileDto.class);
 
