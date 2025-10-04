@@ -51,3 +51,5 @@ server:
         name: SESSION
   port: 8080
   address: 0.0.0.0
+  tomcat:
+    max-swallow-size: -1

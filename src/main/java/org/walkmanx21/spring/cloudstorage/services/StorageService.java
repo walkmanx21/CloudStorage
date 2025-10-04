@@ -154,9 +154,10 @@ public class StorageService {
         return resourceMapper.convertToResourceDto(resourceBuilder.build(newItems.get(0)));
     }
 
-    public StreamingResponseBody downloadResource(String requestObject) {
+    public DownloadResponseDto downloadResource(String requestObject) {
         String userDirectory = userContextService.getUserRootDirectory();
         String fullObject = pathService.getFullObject(requestObject);
+        String fileName = pathService.getFileName(requestObject);
 
         boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
         if (!resourceExist) {
@@ -164,14 +165,12 @@ public class StorageService {
             throw new ResourceNotFoundException();
         }
 
-        return outputStream -> {
-            if (fullObject.endsWith("/")) {
-                downloadService.downloadDirectory(outputStream, fullObject, userDirectory);
-            } else {
+        if (fullObject.endsWith("/")) {
+            return new DownloadResponseDto(outputStream -> downloadService.downloadDirectory(outputStream, fullObject, userDirectory), fileName);
+        } else {
+            return new DownloadResponseDto(outputStream -> downloadService.downloadFile(outputStream, fullObject), fileName);
+        }
 
-                downloadService.downloadFile(outputStream, fullObject);
-            }
-        };
     }
 
     public List<ResourceDto> uploadResources(String path, List<MultipartFile> files) {

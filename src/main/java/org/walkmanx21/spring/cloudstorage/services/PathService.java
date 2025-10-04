@@ -29,4 +29,8 @@ public class PathService {
         else
             return parent == null ? userRootDirectory : userRootDirectory + parent.toString().replace("\\", "/") + "/";
     }
+
+    public String getFileName(String path) {
+        return Paths.get(path).getFileName().toString();
+    }
 }

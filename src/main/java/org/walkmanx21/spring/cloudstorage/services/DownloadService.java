@@ -47,7 +47,15 @@ public class DownloadService {
 
     protected void downloadFile(OutputStream outputStream, String fullPath) {
         try (InputStream inputStream = minioService.getObject(ROOT_BUCKET, fullPath)) {
-            inputStream.transferTo(outputStream);
+            byte[] buffer = new byte[8 * 1024 * 1024];
+            long total = 0L;
+            int read;
+            while ((read = inputStream.read(buffer)) != -1) {
+                outputStream.write(buffer, 0, read);
+                total += read;
+                outputStream.flush();
+            }
+            log.info("Файл: {}, передано: {} байт", fullPath, total);
         } catch (IOException e) {
             log.warn("Ошибка скачивания файла {}", fullPath);
             throw new DownloadException();

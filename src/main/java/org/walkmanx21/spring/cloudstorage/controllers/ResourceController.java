@@ -11,6 +11,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
+import org.walkmanx21.spring.cloudstorage.dto.DownloadResponseDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.services.DownloadService;
 import org.walkmanx21.spring.cloudstorage.services.SearchService;
@@ -55,15 +56,17 @@ public class ResourceController {
     )
     @GetMapping("/download")
     public ResponseEntity<StreamingResponseBody> downloadResource(@RequestParam @ValidPath String path) {
-        String resourceName = Paths.get(path).getFileName().toString();
+        DownloadResponseDto dto = storageService.downloadResource(path);
+
         ContentDisposition contentDisposition = ContentDisposition.attachment()
-                .filename(resourceName, StandardCharsets.UTF_8)
+                .filename(dto.getFileName(), StandardCharsets.UTF_8)
                 .build();
 
         return ResponseEntity.ok()
                 .contentType(MediaType.APPLICATION_OCTET_STREAM)
                 .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
-                .body(storageService.downloadResource(path));
+                .header(HttpHeaders.CONNECTION, "close")
+                .body(dto.getStreamingResponseBody());
     }
 
     @Operation(
