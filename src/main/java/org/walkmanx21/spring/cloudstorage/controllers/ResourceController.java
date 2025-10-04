@@ -100,7 +100,7 @@ public class ResourceController {
     )
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     public ResponseEntity<List<ResourceDto>> uploadResources(
-            @RequestParam @Size(max = 1024, message = "Поле from должно быть не более 1024 символов") String path,
+            @RequestParam @Size(max = 1000, message = "Поле path должно быть не более 1000 символов") String path,
             @RequestPart("object") List<MultipartFile> files) {
         return ResponseEntity.status(HttpStatus.CREATED).body(storageService.uploadResources(path, files));
     }
