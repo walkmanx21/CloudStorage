@@ -25,6 +25,7 @@ public class SearchService {
     private final ResourceRepository resourceRepository;
     private final ResourceMapper resourceMapper;
     private final ResourceBuilder resourceBuilder;
+    private final UserContextService userContextService;
 
     public void saveUserResourceToDatabase(Resource resource) {
         resourceRepository.save(resource);
@@ -36,7 +37,7 @@ public class SearchService {
     }
 
     public Set<ResourceDto> searchResources(String query) {
-        var foundResources = resourceRepository.findResourceByObjectContains(query);
+        var foundResources = resourceRepository.findResourceByUserAndObjectContains(userContextService.getCurrentUser(), query);
         Set<ResourceDto> resourceDtos = new HashSet<>();
         foundResources.ifPresentOrElse(resources -> {
                     resources.forEach(resource -> {

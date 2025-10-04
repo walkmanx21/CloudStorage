@@ -11,5 +11,5 @@ import java.util.Optional;
 @Repository
 public interface ResourceRepository extends JpaRepository <Resource, Integer> {
     Optional<Resource> findResourceByUserAndObject(User user, String object);
-    Optional<List<Resource>> findResourceByObjectContains(String query);
+    Optional<List<Resource>> findResourceByUserAndObjectContains(User user, String query);
 }

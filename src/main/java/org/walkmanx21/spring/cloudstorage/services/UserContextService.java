@@ -16,6 +16,6 @@ public class UserContextService {
     }
 
     public String getUserRootDirectory() {
-        return getCurrentUser().getUserRootDirectory();
+        return "user-" + getCurrentUser().getId() + "-files/";
     }
 }

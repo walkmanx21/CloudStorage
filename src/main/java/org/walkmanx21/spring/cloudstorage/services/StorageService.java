@@ -1,13 +1,16 @@
 package org.walkmanx21.spring.cloudstorage.services;
 
+import io.minio.StatObjectResponse;
 import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.method.annotation.StreamingResponseBody;
 import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
+import org.walkmanx21.spring.cloudstorage.dto.DownloadResponseDto;
 import org.walkmanx21.spring.cloudstorage.dto.ResourceDto;
 import org.walkmanx21.spring.cloudstorage.exceptions.ResourceAlreadyExistException;
 import org.walkmanx21.spring.cloudstorage.exceptions.ParentDirectoryNotExistException;
@@ -15,6 +18,7 @@ import org.walkmanx21.spring.cloudstorage.exceptions.ResourceNotFoundException;
 import org.walkmanx21.spring.cloudstorage.models.Resource;
 import org.walkmanx21.spring.cloudstorage.util.ResourceMapper;
 
+import java.nio.file.Paths;
 import java.util.*;
 
 @Service
@@ -164,6 +168,7 @@ public class StorageService {
             if (fullObject.endsWith("/")) {
                 downloadService.downloadDirectory(outputStream, fullObject, userDirectory);
             } else {
+
                 downloadService.downloadFile(outputStream, fullObject);
             }
         };
