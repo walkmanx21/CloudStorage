@@ -53,3 +53,5 @@ server:
   address: 0.0.0.0
   tomcat:
     max-swallow-size: -1
+
+rootBucket: user-files

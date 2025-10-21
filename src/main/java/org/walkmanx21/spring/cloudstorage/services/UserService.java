@@ -15,7 +15,6 @@ import org.walkmanx21.spring.cloudstorage.repositories.UserRepository;
 import org.walkmanx21.spring.cloudstorage.util.UserMapper;
 
 @Service
-@Transactional
 @RequiredArgsConstructor
 public class UserService {
 
@@ -25,6 +24,7 @@ public class UserService {
     private final StorageService storageService;
     private final SessionService sessionService;
 
+    @Transactional
     public UserResponseDto register(UserRequestDto userRequestDto) {
         User user = userMapper.convertToUser(userRequestDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));

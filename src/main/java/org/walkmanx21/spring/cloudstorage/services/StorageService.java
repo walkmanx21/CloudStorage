@@ -4,6 +4,7 @@ import io.minio.messages.Item;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import org.walkmanx21.spring.cloudstorage.dto.DirectoryDto;
@@ -30,18 +31,19 @@ public class StorageService {
     private final DownloadService downloadService;
     private final PathService pathService;
 
-    private static final String ROOT_BUCKET = "user-files";
+    @Value("${rootBucket}")
+    private String rootBucket;
 
     @PostConstruct
     public void init() {
-        if (!minioService.checkBucketExist(ROOT_BUCKET)) {
-            minioService.createBucket(ROOT_BUCKET);
+        if (!minioService.checkBucketExist(rootBucket)) {
+            minioService.createBucket(rootBucket);
         }
     }
 
     public String createUserRootDirectory(int userId) {
         String userDirectory = "user-" + userId + "-files/";
-        minioService.createDirectory(ROOT_BUCKET, userDirectory);
+        minioService.createDirectory(rootBucket, userDirectory);
         return userDirectory;
     }
 
@@ -51,7 +53,7 @@ public class StorageService {
 
         validateCreateDirectory(parent, fullObject);
 
-        minioService.createDirectory(ROOT_BUCKET, fullObject);
+        minioService.createDirectory(rootBucket, fullObject);
         Resource resource = resourceBuilder.buildDirectory(path);
         searchService.saveUserResourceToDatabase(resource);
         return resourceMapper.convertToDirectoryDto(resource);
@@ -59,7 +61,7 @@ public class StorageService {
 
     public ResourceDto getResourceData(String path) {
         String fullObject = pathService.getFullObject(path);
-        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
+        List<Item> items = minioService.getListObjects(rootBucket, fullObject, false);
         if (!items.isEmpty()) {
             Resource resource = resourceBuilder.build(items.get(0));
             return resourceMapper.convertToResourceDto(resource);
@@ -71,7 +73,7 @@ public class StorageService {
 
     public List<ResourceDto> getDirectoryContents(String path) {
         String fullObject = pathService.getFullObject(path);
-        List<Item> items = minioService.getListObjects(ROOT_BUCKET, fullObject, false);
+        List<Item> items = minioService.getListObjects(rootBucket, fullObject, false);
         List<ResourceDto> resourceDtos = new ArrayList<>();
         for (Item item : items) {
             if (!item.objectName().equals(fullObject)) {
@@ -86,7 +88,7 @@ public class StorageService {
         if (path.startsWith("/"))
             path = path.substring(1);
         String fullObject = pathService.getFullObject(path);
-        List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, fullObject);
+        List<Item> deletedItems = minioService.removeObject(rootBucket, fullObject);
         deletedItems.forEach(item -> searchService.removeUserResourceFromDatabase(item.objectName().substring(userContextService.getUserRootDirectory().length())));
     }
 
@@ -98,17 +100,17 @@ public class StorageService {
 
         validateMoveOrRename(oldObject, newObject, parentOfNewObject);
 
-        List<Item> itemsToChange = minioService.getListObjects(ROOT_BUCKET, oldObject, true);
+        List<Item> itemsToChange = minioService.getListObjects(rootBucket, oldObject, true);
 
         itemsToChange.forEach(item -> {
             String newKey = item.objectName().replace(oldObject, newObject);
-            minioService.copyObject(ROOT_BUCKET, item.objectName(), newKey);
+            minioService.copyObject(rootBucket, item.objectName(), newKey);
         });
 
-        List<Item> newItems = minioService.getListObjects(ROOT_BUCKET, newObject, true);
+        List<Item> newItems = minioService.getListObjects(rootBucket, newObject, true);
         newItems.forEach(newItem -> searchService.saveUserResourceToDatabase(resourceBuilder.build(newItem)));
 
-        List<Item> deletedItems = minioService.removeObject(ROOT_BUCKET, oldObject);
+        List<Item> deletedItems = minioService.removeObject(rootBucket, oldObject);
         deletedItems.forEach(deletedItem -> searchService.removeUserResourceFromDatabase(deletedItem.objectName().substring(userContextService.getUserRootDirectory().length())));
 
         return resourceMapper.convertToResourceDto(resourceBuilder.build(newItems.get(0)));
@@ -134,7 +136,7 @@ public class StorageService {
 
         Map<String, MultipartFile> filesMap = new HashMap<>();
         for (MultipartFile file : files) {
-            boolean fileExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject + file.getOriginalFilename());
+            boolean fileExist = minioService.checkResourceExist(rootBucket, fullObject + file.getOriginalFilename());
 
             if (!fileExist) {
                 filesMap.put(file.getOriginalFilename(), file);
@@ -144,7 +146,7 @@ public class StorageService {
             }
         }
 
-        minioService.uploadResources(ROOT_BUCKET, fullObject, filesMap);
+        minioService.uploadResources(rootBucket, fullObject, filesMap);
         List<ResourceDto> resourceDtos = new ArrayList<>();
         filesMap.forEach((key, file) -> {
             String object = path + file.getOriginalFilename();
@@ -157,8 +159,8 @@ public class StorageService {
     }
 
     private void validateCreateDirectory(String parent, String fullObject) {
-        boolean parentDirectoryExist = minioService.checkResourceExist(ROOT_BUCKET, parent);
-        boolean directoryToCreateExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
+        boolean parentDirectoryExist = minioService.checkResourceExist(rootBucket, parent);
+        boolean directoryToCreateExist = minioService.checkResourceExist(rootBucket, fullObject);
 
         if (!parentDirectoryExist) {
             log.warn("Родительской папки {} не существует", parent);
@@ -172,8 +174,8 @@ public class StorageService {
     }
 
     private void validateMoveOrRename(String oldObject, String newObject, String parentOfNewObject) {
-        boolean oldObjectExist = minioService.checkResourceExist(ROOT_BUCKET, oldObject);
-        boolean parentOfNewObjectExist = minioService.checkResourceExist(ROOT_BUCKET, parentOfNewObject);
+        boolean oldObjectExist = minioService.checkResourceExist(rootBucket, oldObject);
+        boolean parentOfNewObjectExist = minioService.checkResourceExist(rootBucket, parentOfNewObject);
 
         if (!oldObjectExist) {
             log.warn("Старого объекта {} не существует", oldObject);
@@ -185,7 +187,7 @@ public class StorageService {
             throw new ResourceNotFoundException();
         }
 
-        boolean newFileAlreadyExist = minioService.checkResourceExist(ROOT_BUCKET, newObject);
+        boolean newFileAlreadyExist = minioService.checkResourceExist(rootBucket, newObject);
 
         if (newFileAlreadyExist) {
             log.warn("Новый файл {} уже существует", newObject);
@@ -194,7 +196,7 @@ public class StorageService {
     }
 
     private void validateDownload(String fullObject) {
-        boolean resourceExist = minioService.checkResourceExist(ROOT_BUCKET, fullObject);
+        boolean resourceExist = minioService.checkResourceExist(rootBucket, fullObject);
         if (!resourceExist) {
             log.warn("Ресурс {} для скачивания не найден", fullObject);
             throw new ResourceNotFoundException();
