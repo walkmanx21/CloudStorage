@@ -29,5 +29,8 @@ public abstract class ResourceDto {
     private String name;
     private ResourceDtoType type;
 
+    private enum ResourceDtoType {
+        DIRECTORY, FILE
+    }
 
 }

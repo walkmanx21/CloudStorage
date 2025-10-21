@@ -32,7 +32,7 @@ public class SearchService {
     }
 
     public void removeUserResourceFromDatabase(String object) {
-        Optional<Resource> userResource = resourceRepository.findResourceByUserAndObject(getCurrentUser(), object);
+        Optional<Resource> userResource = resourceRepository.findResourceByUserAndObject(userContextService.getCurrentUser(), object);
         userResource.ifPresent(resourceRepository::delete);
     }
 
@@ -66,9 +66,4 @@ public class SearchService {
         return resourceDtos;
     }
 
-    private User getCurrentUser() {
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        MyUserDetails userDetails = (MyUserDetails) authentication.getPrincipal();
-        return userDetails.getUser();
-    }
 }
